@@ -1,0 +1,86 @@
+name: CI
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: stable
+  RUST_TOOLCHAIN_MSRV: 1.85.0
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: check
+        run: |
+          make check
+      - name: clippy
+        run: |
+          make clippy
+      - name: rustfmt
+        run: |
+          make fmt-check
+
+  test:
+    needs: [check, check-all-features]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: make test
+
+  test-macos:
+    needs: [check, check-all-features]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: make test
+
+  cargo-hack:
+    needs: [check, check-all-features]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - name: install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: cargo hack check
+        run: make hack
+
+  dependencies-are-sorted:
+    needs: [check, check-all-features]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-sort
+        run: |
+          cargo install cargo-sort
+      - name: Check dependency tables
+        working-directory: .
+        run: |
+          make sort-check
