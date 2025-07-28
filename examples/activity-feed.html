@@ -13,6 +13,11 @@
             data-signals-interval="10"
             data-signals-events="200"
             data-signals-generating="false"
+            data-signals-total="0"
+            data-signals-done="0"
+            data-signals-warn="0"
+            data-signals-fail="0"
+            data-signals-info="0"
             class="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-lg px-6 py-8 ring shadow-xl ring-gray-900/5 space-y-2"
         >
             <div class="flex justify-between items-center">
@@ -94,7 +99,28 @@
             <div id="feed">
                 Click <code class="text-fuchsia-600">Generate</code> to create
                 <span data-text="$events">200</span> events,
-                <span data-text="$interval">10</span> milliseconds apart.
+                <span data-text="$interval">10</span> milliseconds apart.<br />
+                <span class="text-gray-100">
+                    Total: <span data-text="$total">0</span>
+                </span>
+                |
+                <span class="text-green-500">
+                    Done: <span data-text="$done">0</span>
+                </span>
+                |
+                <span class="text-yellow-500">
+                    Warn: <span data-text="$warn">0</span>
+                </span>
+                |
+                <span class="text-red-500"
+                    >Fail: <span data-text="$fail">0</span>
+                </span>
+                |
+                <span class="text-blue-500">
+                    Info: <span data-text="$info">0</span>
+                </span>
+                <br />
+                -------------------------------------------------------------
             </div>
         </div>
     </body>
