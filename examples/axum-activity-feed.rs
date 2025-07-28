@@ -85,6 +85,11 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
     Sse::new(stream! {
         let mut total = signals.total;
         let mut done = signals.done;
+        let interval = signals.interval;
+        let patch = PatchSignals::new(format!(r#"{{"generating": true}}"#));
+        let sse_event = patch.write_as_axum_sse_event();
+        yield Ok::<_, Infallible>(sse_event);
+
         for _ in 1..=signals.events {
             total += 1;
             done += 1;
@@ -92,26 +97,14 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
             let patch = PatchElements::new(elements).selector("#feed").mode(ElementPatchMode::After);
             let sse_event = patch.write_as_axum_sse_event();
             yield Ok::<_, Infallible>(sse_event);
-            let signals_generating = serde_json::to_string(&Signals{
-                generating: true,
-                total,
-                done,
-                ..signals
-            }).unwrap();
-            let patch = PatchSignals::new(signals_generating);
-            let sse_event = patch.write_as_axum_sse_event();
 
+            let patch = PatchSignals::new(format!(r#"{{"total": {total}, "done": {done}}}"#));
+            let sse_event = patch.write_as_axum_sse_event();
             yield Ok::<_, Infallible>(sse_event);
-            tokio::time::sleep(Duration::from_millis(signals.interval)).await;
+            tokio::time::sleep(Duration::from_millis(interval)).await;
         }
 
-        let signals_done = serde_json::to_string(&Signals{
-            generating: false,
-            total,
-            done,
-            ..signals
-        }).unwrap();
-        let patch = PatchSignals::new(signals_done);
+        let patch = PatchSignals::new(format!(r#"{{"generating": false}}"#));
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
     })
@@ -124,26 +117,30 @@ async fn event(status: Status, ReadSignals(signals): ReadSignals<Signals>) -> im
         let mut warn = signals.warn;
         let mut fail = signals.fail;
         let mut info = signals.info;
-        match status {
-            Status::Done => done += 1,
-            Status::Warn => warn += 1,
-            Status::Fail => fail += 1,
-            Status::Info => info += 1,
-        }
+        let signal = match status {
+            Status::Done => {
+                done += 1;
+                format!(r#"{{"total": {total}, "done": {done}}}"#)
+            }
+            Status::Warn => {
+                warn += 1;
+                format!(r#"{{"total": {total}, "warn": {warn}}}"#)
+            }
+            Status::Fail => {
+                fail += 1;
+                format!(r#"{{"total": {total}, "fail": {fail}}}"#)
+            }
+            Status::Info => {
+                info += 1;
+                format!(r#"{{"total": {total}, "info": {info}}}"#)
+            }
+        };
         let elements = event_entry(total, &status, "Manual");
         let patch = PatchElements::new(elements).selector("#feed").mode(ElementPatchMode::After);
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
 
-        let signals = serde_json::to_string(&Signals {
-            total,
-            done,
-            warn,
-            fail,
-            info,
-            ..signals
-        }).unwrap();
-        let patch = PatchSignals::new(signals);
+        let patch = PatchSignals::new(signal);
         let sse_signal = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_signal);
     })
