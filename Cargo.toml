@@ -32,6 +32,7 @@ axum = { version = "0.8.4", default-features = false, optional = true, features 
     "tokio",
     "json",
 ] }
+chrono = { version = "0.4.41", default-features = false, features = ["clock"] }
 rocket = { version = "0.5.1", default-features = false, optional = true }
 serde = { version = "1", default-features = false, optional = true, features = [
     "derive",
