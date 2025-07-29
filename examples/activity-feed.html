@@ -10,14 +10,6 @@
     </head>
     <body class="bg-white dark:bg-gray-900 text-lg max-w-xl mx-auto my-16">
         <div
-            data-signals-interval="10"
-            data-signals-events="200"
-            data-signals-generating="false"
-            data-signals-total="0"
-            data-signals-done="0"
-            data-signals-warn="0"
-            data-signals-fail="0"
-            data-signals-info="0"
             class="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-lg px-6 py-8 ring shadow-xl ring-gray-900/5 space-y-2"
         >
             <div class="flex justify-between items-center">
@@ -38,19 +30,21 @@
             </p>
             <div class="space-x-2">
                 <input
+                    id="events"
+                    data-signals-events="200"
                     data-bind-events
-                    id="count"
                     type="number"
                     step="100"
                     min="0"
                     class="w-36 rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline focus:outline-sky-500 dark:disabled:border-gray-700 dark:disabled:bg-gray-800/20"
                 />
-                <label for="count"> Number of events </label>
+                <label for="events"> Number of events </label>
             </div>
             <div class="space-x-2">
                 <input
-                    data-bind-interval
                     id="interval"
+                    data-signals-interval="10"
+                    data-bind-interval
                     type="number"
                     step="10"
                     min="0"
@@ -61,9 +55,13 @@
             <button
                 id="start-button"
                 data-on-click="@post(&#39;/event/generate&#39;)"
+                data-signals-generating="false"
                 data-attr-disabled="$generating"
-                data-style-background-color="$generating && 'bg-gray-500'"
-                class="rounded-md px-5 py-2.5 leading-5 font-semibold text-white bg-sky-500 hover:bg-sky-700 hover:text-gray-100 cursor-pointer"
+                data-class="{
+                    'bg-gray-500 text-gray-300 cursor-wait': $generating,
+                    'bg-sky-500 text-white cursor-pointer hover:bg-sky-700 hover:text-gray-100': !$generating,
+                }"
+                class="rounded-md px-5 py-2.5 leading-5 font-semibold"
             >
                 Generate
             </button>
@@ -100,23 +98,23 @@
                 Click <code class="text-fuchsia-600">Generate</code> to create
                 <span data-text="$events">200</span> events,
                 <span data-text="$interval">10</span> milliseconds apart.<br />
-                <span class="text-gray-100">
+                <span class="text-gray-100" data-signals-total="0">
                     Total: <span data-text="$total">0</span>
                 </span>
                 |
-                <span class="text-green-500">
+                <span class="text-green-500" data-signals-done="0">
                     Done: <span data-text="$done">0</span>
                 </span>
                 |
-                <span class="text-yellow-500">
+                <span class="text-yellow-500" data-signals-warn="0">
                     Warn: <span data-text="$warn">0</span>
                 </span>
                 |
-                <span class="text-red-500"
-                    >Fail: <span data-text="$fail">0</span>
+                <span class="text-red-500" data-signals-fail="0">
+                    Fail: <span data-text="$fail">0</span>
                 </span>
                 |
-                <span class="text-blue-500">
+                <span class="text-blue-500" data-signals-info="0">
                     Info: <span data-text="$info">0</span>
                 </span>
                 <br />
