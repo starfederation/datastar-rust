@@ -13,21 +13,10 @@
             class="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-lg px-6 py-8 ring shadow-xl ring-gray-900/5 space-y-2"
         >
             <div class="flex justify-between items-center">
-                <h1
-                    class="text-gray-900 dark:text-white text-3xl font-semibold"
-                >
-                    Datastar SDK Activity Feed Demo
-                </h1>
-                <img
-                    src="https://data-star.dev/static/images/rocket-64x64.png"
-                    alt="Rocket"
-                    width="64"
-                    height="64"
-                />
+                <h1 class="text-gray-900 dark:text-white text-3xl font-semibold">Datastar SDK Activity Feed Demo</h1>
+                <img src="https://data-star.dev/static/images/rocket-64x64.png" alt="Rocket" width="64" height="64" />
             </div>
-            <p class="mt-2">
-                SSE events will be streamed from the backend to the frontend.
-            </p>
+            <p class="mt-2">SSE events will be streamed from the backend to the frontend.</p>
             <div class="space-x-2">
                 <input
                     id="events"
@@ -91,32 +80,20 @@
                 Info
             </button>
         </div>
-        <div
-            class="mt-2 text-gray-400 font-mono text-sm rounded-md bg-black p-4"
-        >
+        <div class="mt-2 text-gray-400 font-mono text-sm rounded-md bg-black p-4">
             <div id="feed">
                 Click <code class="text-fuchsia-600">Generate</code> to create
-                <span data-text="$events">200</span> events,
-                <span data-text="$interval">10</span> milliseconds apart.<br />
-                <span class="text-gray-100" data-signals-total="0">
-                    Total: <span data-text="$total">0</span>
-                </span>
+                <span data-text="$events">200</span> events, <span data-text="$interval">10</span> milliseconds
+                apart.<br />
+                <span class="text-gray-100" data-signals-total="0"> Total: <span data-text="$total">0</span> </span>
                 |
-                <span class="text-green-500" data-signals-done="0">
-                    Done: <span data-text="$done">0</span>
-                </span>
+                <span class="text-green-500" data-signals-done="0"> Done: <span data-text="$done">0</span> </span>
                 |
-                <span class="text-yellow-500" data-signals-warn="0">
-                    Warn: <span data-text="$warn">0</span>
-                </span>
+                <span class="text-yellow-500" data-signals-warn="0"> Warn: <span data-text="$warn">0</span> </span>
                 |
-                <span class="text-red-500" data-signals-fail="0">
-                    Fail: <span data-text="$fail">0</span>
-                </span>
+                <span class="text-red-500" data-signals-fail="0"> Fail: <span data-text="$fail">0</span> </span>
                 |
-                <span class="text-blue-500" data-signals-info="0">
-                    Info: <span data-text="$info">0</span>
-                </span>
+                <span class="text-blue-500" data-signals-info="0"> Info: <span data-text="$info">0</span> </span>
                 <br />
                 -------------------------------------------------------------
             </div>
