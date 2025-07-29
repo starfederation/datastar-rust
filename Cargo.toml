@@ -109,3 +109,7 @@ required-features = ["axum", "tracing"]
 [[example]]
 name = "rocket-hello"
 required-features = ["rocket"]
+
+[[example]]
+name = "rocket-hello-channel"
+required-features = ["rocket"]
