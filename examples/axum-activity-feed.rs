@@ -2,6 +2,7 @@ use {
     async_stream::stream,
     axum::{
         Router,
+        extract::Path,
         response::{Html, IntoResponse, Sse},
         routing::{get, post},
     },
@@ -14,6 +15,34 @@ use {
     serde::{Deserialize, Serialize},
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
+
+/// All `data-signals-*` defined in activity-feed.html
+#[derive(Serialize, Deserialize)]
+pub struct Signals {
+    // Form inputs
+    pub interval: u64,
+    pub events: u64,
+    // Activity flags
+    pub generating: bool,
+    // Output counters
+    pub total: u64,
+    pub done: u64,
+    pub warn: u64,
+    pub fail: u64,
+    pub info: u64,
+}
+
+/// All valid event statuses.
+// Normalizing variants to lowercase allows parsing routes from `/event/{status}`
+// with a `Path<Status>` extractor.
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Status {
+    Done,
+    Fail,
+    Info,
+    Warn,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -29,151 +58,98 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let app = Router::new()
         .route("/", get(index))
         .route("/event/generate", post(generate))
-        .route(
-            "/event/info",
-            post(move |signals| event(Status::Info, signals)),
-        )
-        .route(
-            "/event/done",
-            post(move |signals| event(Status::Done, signals)),
-        )
-        .route(
-            "/event/warn",
-            post(move |signals| event(Status::Warn, signals)),
-        )
-        .route(
-            "/event/fail",
-            post(move |signals| event(Status::Fail, signals)),
-        );
+        .route("/event/{status}", post(event));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
 
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    tracing::debug!("listening on {}", listener.local_addr()?);
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
 
+/// Simple handler returning a static HTML page
 async fn index() -> Html<&'static str> {
     Html(include_str!("activity-feed.html"))
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Signals {
-    pub interval: u64,
-    pub events: u64,
-    pub generating: bool,
-    pub total: u64,
-    pub done: u64,
-    pub warn: u64,
-    pub fail: u64,
-    pub info: u64,
-}
-
-#[derive(Clone, PartialEq, Eq, Deserialize)]
-pub enum Status {
-    Info,
-    Done,
-    Warn,
-    Fail,
-}
-
+/// Generates a number of "done" events with a specified interval.
 async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoResponse {
+    // Values we will update in a loop
+    let mut total = signals.total;
+    let mut done = signals.done;
+
+    // Start the SSE stream
     Sse::new(stream! {
-        let mut total = signals.total;
-        let mut done = signals.done;
-        let interval = signals.interval;
+        // Signal event generation start
         let patch = PatchSignals::new(format!(r#"{{"generating": true}}"#));
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
 
+        // Yield the events elements and signals to the stream
         for _ in 1..=signals.events {
             total += 1;
             done += 1;
-            let elements = event_entry(total, &Status::Done, "Auto");
+            // Append a new entry to the activity feed
+            let elements = event_entry(&Status::Done, total, "Auto");
             let patch = PatchElements::new(elements).selector("#feed").mode(ElementPatchMode::After);
             let sse_event = patch.write_as_axum_sse_event();
             yield Ok::<_, Infallible>(sse_event);
 
+            // Update the event counts
             let patch = PatchSignals::new(format!(r#"{{"total": {total}, "done": {done}}}"#));
             let sse_event = patch.write_as_axum_sse_event();
             yield Ok::<_, Infallible>(sse_event);
-            tokio::time::sleep(Duration::from_millis(interval)).await;
+            tokio::time::sleep(Duration::from_millis(signals.interval)).await;
         }
 
+        // Signal event generation end
         let patch = PatchSignals::new(format!(r#"{{"generating": false}}"#));
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
     })
 }
 
-async fn event(status: Status, ReadSignals(signals): ReadSignals<Signals>) -> impl IntoResponse {
+/// Creates one event with a given status
+async fn event(
+    Path(status): Path<Status>,
+    ReadSignals(signals): ReadSignals<Signals>,
+) -> impl IntoResponse {
+    // Create the event stream, since we're patching both an element and a signal.
     Sse::new(stream! {
+        // Signal the updated event counts
         let total = signals.total + 1;
-        let mut done = signals.done;
-        let mut warn = signals.warn;
-        let mut fail = signals.fail;
-        let mut info = signals.info;
-        let signal = match status {
-            Status::Done => {
-                done += 1;
-                format!(r#"{{"total": {total}, "done": {done}}}"#)
-            }
-            Status::Warn => {
-                warn += 1;
-                format!(r#"{{"total": {total}, "warn": {warn}}}"#)
-            }
-            Status::Fail => {
-                fail += 1;
-                format!(r#"{{"total": {total}, "fail": {fail}}}"#)
-            }
-            Status::Info => {
-                info += 1;
-                format!(r#"{{"total": {total}, "info": {info}}}"#)
-            }
+        let signals = match status {
+            Status::Done => format!(r#"{{"total": {total}, "done": {}}}"#, signals.done + 1),
+            Status::Warn => format!(r#"{{"total": {total}, "warn": {}}}"#, signals.warn + 1),
+            Status::Fail => format!(r#"{{"total": {total}, "fail": {}}}"#, signals.fail + 1),
+            Status::Info => format!(r#"{{"total": {total}, "info": {}}}"#, signals.info + 1),
         };
-        let elements = event_entry(total, &status, "Manual");
+        let patch = PatchSignals::new(signals);
+        let sse_signal = patch.write_as_axum_sse_event();
+        yield Ok::<_, Infallible>(sse_signal);
+
+        // Patch an element and append it to the feed
+        let elements = event_entry(&status, total, "Manual");
         let patch = PatchElements::new(elements).selector("#feed").mode(ElementPatchMode::After);
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
-
-        let patch = PatchSignals::new(signal);
-        let sse_signal = patch.write_as_axum_sse_event();
-        yield Ok::<_, Infallible>(sse_signal);
     })
 }
 
-fn event_entry(index: u64, status: &Status, prefix: &str) -> String {
+/// Returns an HTML string for the entry
+fn event_entry(status: &Status, index: u64, source: &str) -> String {
     let timestamp = chrono::Utc::now()
         .format("%Y-%m-%d %H:%M:%S%.3f")
         .to_string();
-    match status {
-        Status::Done => {
-            format!(
-                "<div id='event-{}' class='text-green-500'>{} [ ✅ Done ] {} event {}</div>",
-                index, timestamp, prefix, index
-            )
-        }
-        Status::Warn => {
-            format!(
-                "<div id='event-{}' class='text-yellow-500'>{} [ ⚠️ Warn ] {} event {}</div>",
-                index, timestamp, prefix, index
-            )
-        }
-        Status::Fail => {
-            format!(
-                "<div id='event-{}' class='text-red-500'>{} [ ❌ Fail ] {} event {}</div>",
-                index, timestamp, prefix, index
-            )
-        }
-        Status::Info => {
-            format!(
-                "<div id='event-{}' class='text-blue-500'>{} [ ℹ️ Info ] {} event {}</div>",
-                index, timestamp, prefix, index
-            )
-        }
-    }
+    let (color, indicator) = match status {
+        Status::Done => ("green", "✅ Done"),
+        Status::Warn => ("yellow", "⚠️ Warn"),
+        Status::Fail => ("red", "❌ Fail"),
+        Status::Info => ("blue", "ℹ️ Info"),
+    };
+    format!(
+        "<div id='event-{index}' class='text-{color}-500'>{timestamp} [ {indicator} ] {source} event {index}</div>"
+    )
 }
