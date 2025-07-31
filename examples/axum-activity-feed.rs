@@ -6,7 +6,6 @@ use {
         response::{Html, IntoResponse, Sse},
         routing::{get, post},
     },
-    chrono,
     core::{convert::Infallible, error::Error, time::Duration},
     datastar::{
         axum::ReadSignals,
@@ -83,7 +82,7 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
     // Start the SSE stream
     Sse::new(stream! {
         // Signal event generation start
-        let patch = PatchSignals::new(format!(r#"{{"generating": true}}"#));
+        let patch = PatchSignals::new(r#"{{"generating": true}}"#);
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
 
@@ -105,7 +104,7 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
         }
 
         // Signal event generation end
-        let patch = PatchSignals::new(format!(r#"{{"generating": false}}"#));
+        let patch = PatchSignals::new(r#"{{"generating": false}}"#);
         let sse_event = patch.write_as_axum_sse_event();
         yield Ok::<_, Infallible>(sse_event);
     })
