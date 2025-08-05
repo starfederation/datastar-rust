@@ -3,7 +3,7 @@
 use {
     crate::{
         consts::{self, DATASTAR_REQ_HEADER_STR},
-        prelude::{DatastarEvent, PatchElements, PatchSignals},
+        prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
     },
     axum::{
         Json,
@@ -23,10 +23,53 @@ impl PatchElements {
     }
 }
 
+impl From<PatchElements> for Event {
+    fn from(value: PatchElements) -> Self {
+        value.write_as_axum_sse_event()
+    }
+}
+
+impl From<&PatchElements> for Event {
+    fn from(value: &PatchElements) -> Self {
+        value.write_as_axum_sse_event()
+    }
+}
+
 impl PatchSignals {
     /// Write this [`PatchSignals`] into an Axum SSE [`Event`].
     pub fn write_as_axum_sse_event(&self) -> Event {
         self.as_datastar_event().write_as_axum_sse_event()
+    }
+}
+
+impl From<PatchSignals> for Event {
+    fn from(value: PatchSignals) -> Self {
+        value.write_as_axum_sse_event()
+    }
+}
+
+impl From<&PatchSignals> for Event {
+    fn from(value: &PatchSignals) -> Self {
+        value.write_as_axum_sse_event()
+    }
+}
+
+impl ExecuteScript {
+    /// Write this [`ExecuteScript`] into an Axum SSE [`Event`].
+    pub fn write_as_axum_sse_event(&self) -> Event {
+        self.as_datastar_event().write_as_axum_sse_event()
+    }
+}
+
+impl From<ExecuteScript> for Event {
+    fn from(value: ExecuteScript) -> Self {
+        value.write_as_axum_sse_event()
+    }
+}
+
+impl From<&ExecuteScript> for Event {
+    fn from(value: &ExecuteScript) -> Self {
+        value.write_as_axum_sse_event()
     }
 }
 
@@ -58,6 +101,18 @@ impl DatastarEvent {
         }
 
         event.data(data)
+    }
+}
+
+impl From<DatastarEvent> for Event {
+    fn from(value: DatastarEvent) -> Self {
+        value.write_as_axum_sse_event()
+    }
+}
+
+impl From<&DatastarEvent> for Event {
+    fn from(value: &DatastarEvent) -> Self {
+        value.write_as_axum_sse_event()
     }
 }
 

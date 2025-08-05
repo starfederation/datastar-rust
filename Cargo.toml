@@ -13,7 +13,7 @@ license = "MIT"
 name = "datastar"
 readme = "README.md"
 repository = "https://github.com/starfederation/datastar-rust"
-version = "0.3.0"
+version = "0.3.1"
 rust-version = "1.85.0"
 
 [package.metadata.docs.rs]
