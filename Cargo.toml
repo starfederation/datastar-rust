@@ -104,6 +104,14 @@ name = "axum-hello"
 required-features = ["axum", "tracing"]
 
 [[example]]
+name = "axum-live-reload"
+required-features = ["axum", "tracing"]
+
+[[example]]
+name = "axum-activity-feed"
+required-features = ["axum", "tracing"]
+
+[[example]]
 name = "axum-test-suite"
 required-features = ["axum", "tracing"]
 

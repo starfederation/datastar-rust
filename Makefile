@@ -62,6 +62,12 @@ update-deps:
 hello-axum:
 	cargo run --example axum-hello --features axum,tracing
 
+live-reload-axum:
+	cargo run --example axum-live-reload --features axum,tracing
+
+watch-live-reload-axum:
+	 RUST_LOG=debug cargo watch -x 'run --example axum-live-reload --features axum,tracing'
+
 activity-feed-axum:
 	cargo run --example axum-activity-feed --features axum,tracing
 
