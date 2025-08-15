@@ -54,6 +54,11 @@ detect-unused-deps:
 	# https://github.com/bnjbvr/cargo-machete
 	cargo machete --skip-target-dir
 
+update-deps:
+	cargo upgrade
+	cargo upgrades
+	cargo update
+
 hello-axum:
 	cargo run --example axum-hello --features axum,tracing
 
