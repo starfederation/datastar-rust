@@ -1,5 +1,5 @@
 use {
-    async_stream::stream,
+    asynk_strim::stream_fn,
     axum::{
         Router,
         response::{IntoResponse, Sse},
@@ -87,22 +87,50 @@ pub enum TestCaseEvent {
 }
 
 async fn test(ReadSignals(test_case): ReadSignals<TestCase>) -> impl IntoResponse {
-    Sse::new(stream! {
+    Sse::new(stream_fn(move |mut yielder| async move {
         for event in test_case.events {
             let sse_event = match event {
-                TestCaseEvent::ExecuteScript { script, event_id, retry_duration, attributes, auto_remove } => {
-                    ExecuteScript {
-                        script,
-                        id: event_id,
-                        retry: Duration::from_millis(retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION)),
-                        auto_remove,
-                        attributes: attributes.map(|attributes| {
-                            attributes.into_iter().map(|(key, value)| format!("{key}=\"{}\"", value.to_string().trim_matches('"'))).collect()
-                        }).unwrap_or_default(),
-                    }.into_datastar_event().write_as_axum_sse_event()
+                TestCaseEvent::ExecuteScript {
+                    script,
+                    event_id,
+                    retry_duration,
+                    attributes,
+                    auto_remove,
+                } => ExecuteScript {
+                    script,
+                    id: event_id,
+                    retry: Duration::from_millis(
+                        retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION),
+                    ),
+                    auto_remove,
+                    attributes: attributes
+                        .map(|attributes| {
+                            attributes
+                                .into_iter()
+                                .map(|(key, value)| {
+                                    format!("{key}=\"{}\"", value.to_string().trim_matches('"'))
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default(),
                 }
-                TestCaseEvent::PatchElements { elements, event_id, retry_duration, mode, selector, use_view_transition } => {
-                    PatchElements { id: event_id, retry: Duration::from_millis(retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION)), elements, selector, mode: match mode.as_deref().unwrap_or_default() {
+                .into_datastar_event()
+                .write_as_axum_sse_event(),
+                TestCaseEvent::PatchElements {
+                    elements,
+                    event_id,
+                    retry_duration,
+                    mode,
+                    selector,
+                    use_view_transition,
+                } => PatchElements {
+                    id: event_id,
+                    retry: Duration::from_millis(
+                        retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION),
+                    ),
+                    elements,
+                    selector,
+                    mode: match mode.as_deref().unwrap_or_default() {
                         "outer" => consts::ElementPatchMode::Outer,
                         "inner" => consts::ElementPatchMode::Inner,
                         "remove" => consts::ElementPatchMode::Remove,
@@ -112,19 +140,34 @@ async fn test(ReadSignals(test_case): ReadSignals<TestCase>) -> impl IntoRespons
                         "before" => consts::ElementPatchMode::Before,
                         "after" => consts::ElementPatchMode::After,
                         _ => consts::ElementPatchMode::Outer,
-                    }, use_view_transition: use_view_transition.unwrap_or_default() }.into_datastar_event().write_as_axum_sse_event()
-                },
-                TestCaseEvent::PatchSignals { signals, signals_raw, event_id, retry_duration, only_if_missing } => {
-                    PatchSignals {
-                        id: event_id,
-                        retry: Duration::from_millis(retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION)),
-                        signals: signals_raw.unwrap_or_else(|| signals.map(|s| serde_json::to_string(&s).unwrap_or_default()).unwrap_or_default()),
-                        only_if_missing: only_if_missing.unwrap_or_default(),
-                    }.into_datastar_event().write_as_axum_sse_event()
-                },
+                    },
+                    use_view_transition: use_view_transition.unwrap_or_default(),
+                }
+                .into_datastar_event()
+                .write_as_axum_sse_event(),
+                TestCaseEvent::PatchSignals {
+                    signals,
+                    signals_raw,
+                    event_id,
+                    retry_duration,
+                    only_if_missing,
+                } => PatchSignals {
+                    id: event_id,
+                    retry: Duration::from_millis(
+                        retry_duration.unwrap_or(consts::DEFAULT_SSE_RETRY_DURATION),
+                    ),
+                    signals: signals_raw.unwrap_or_else(|| {
+                        signals
+                            .map(|s| serde_json::to_string(&s).unwrap_or_default())
+                            .unwrap_or_default()
+                    }),
+                    only_if_missing: only_if_missing.unwrap_or_default(),
+                }
+                .into_datastar_event()
+                .write_as_axum_sse_event(),
             };
 
-            yield Ok::<_, Infallible>(sse_event);
+            yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
         }
-    })
+    }))
 }

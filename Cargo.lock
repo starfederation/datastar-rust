@@ -75,6 +75,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "asynk-strim"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b20163f2d9527c5d759d15a66c846435410810fd414c1c4c58b9078fda370ea1"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+]
+
+[[package]]
 name = "atomic"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -265,7 +275,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 name = "datastar"
 version = "0.3.1"
 dependencies = [
- "async-stream",
+ "asynk-strim",
  "axum",
  "chrono",
  "indexmap",

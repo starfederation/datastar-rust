@@ -43,7 +43,7 @@ serde_json = { version = "1", default-features = false, optional = true, feature
 tracing = { version = "0.1.41", optional = true }
 
 [dev-dependencies]
-async-stream = { version = "0.3.6", default-features = false }
+asynk-strim = { version = "0.1" }
 axum = { version = "0.8.4" }
 indexmap = { version = "2.11", features = ["serde"] }
 reqwest = { version = "0.12.23", features = ["json", "stream"] }

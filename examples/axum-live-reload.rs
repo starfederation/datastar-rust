@@ -1,5 +1,5 @@
 use {
-    async_stream::stream,
+    asynk_strim::stream_fn,
     axum::{
         Router,
         response::{Html, IntoResponse, Sse},
@@ -75,14 +75,14 @@ async fn hotreload() -> impl IntoResponse {
     use datastar::prelude::ExecuteScript;
     static ONCE: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
-    Sse::new(stream! {
+    Sse::new(stream_fn(move |mut yielder| async move {
         if !ONCE.swap(true, atomic::Ordering::SeqCst) {
             let script = ExecuteScript::new("window.location.reload()");
             let sse_event = script.write_as_axum_sse_event();
-            yield Ok::<_, Infallible>(sse_event);
+            yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
         }
         std::future::pending().await
-    })
+    }))
 }
 
 const MESSAGE: &str = "Hello, world!";
@@ -93,15 +93,15 @@ pub struct Signals {
 }
 
 async fn hello_world(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoResponse {
-    Sse::new(stream! {
+    Sse::new(stream_fn(move |mut yielder| async move {
         for i in 0..MESSAGE.len() {
             let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
             let patch = PatchElements::new(elements);
             let sse_event = patch.write_as_axum_sse_event();
 
-            yield Ok::<_, Infallible>(sse_event);
+            yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
 
             tokio::time::sleep(Duration::from_millis(signals.delay)).await;
         }
-    })
+    }))
 }
