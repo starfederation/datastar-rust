@@ -1,9 +1,9 @@
 use {
-    asynk_strim::stream_fn,
+    asynk_strim::{Yielder, stream_fn},
     axum::{
         Router,
         extract::Path,
-        response::{Html, IntoResponse, Sse},
+        response::{Html, IntoResponse, Sse, sse::Event},
         routing::{get, post},
     },
     core::{convert::Infallible, error::Error, time::Duration},
@@ -80,36 +80,38 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
     let mut done = signals.done;
 
     // Start the SSE stream
-    Sse::new(stream_fn(move |mut yielder| async move {
-        // Signal event generation start
-        let patch = PatchSignals::new(r#"{{"generating": true}}"#);
-        let sse_event = patch.write_as_axum_sse_event();
-        yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
-
-        // Yield the events elements and signals to the stream
-        for _ in 1..=signals.events {
-            total += 1;
-            done += 1;
-            // Append a new entry to the activity feed
-            let elements = event_entry(&Status::Done, total, "Auto");
-            let patch = PatchElements::new(elements)
-                .selector("#feed")
-                .mode(ElementPatchMode::After);
+    Sse::new(stream_fn(
+        move |mut yielder: Yielder<Result<Event, Infallible>>| async move {
+            // Signal event generation start
+            let patch = PatchSignals::new(r#"{{"generating": true}}"#);
             let sse_event = patch.write_as_axum_sse_event();
-            yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
+            yielder.yield_item(Ok(sse_event)).await;
 
-            // Update the event counts
-            let patch = PatchSignals::new(format!(r#"{{"total": {total}, "done": {done}}}"#));
+            // Yield the events elements and signals to the stream
+            for _ in 1..=signals.events {
+                total += 1;
+                done += 1;
+                // Append a new entry to the activity feed
+                let elements = event_entry(&Status::Done, total, "Auto");
+                let patch = PatchElements::new(elements)
+                    .selector("#feed")
+                    .mode(ElementPatchMode::After);
+                let sse_event = patch.write_as_axum_sse_event();
+                yielder.yield_item(Ok(sse_event)).await;
+
+                // Update the event counts
+                let patch = PatchSignals::new(format!(r#"{{"total": {total}, "done": {done}}}"#));
+                let sse_event = patch.write_as_axum_sse_event();
+                yielder.yield_item(Ok(sse_event)).await;
+                tokio::time::sleep(Duration::from_millis(signals.interval)).await;
+            }
+
+            // Signal event generation end
+            let patch = PatchSignals::new(r#"{{"generating": false}}"#);
             let sse_event = patch.write_as_axum_sse_event();
-            yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
-            tokio::time::sleep(Duration::from_millis(signals.interval)).await;
-        }
-
-        // Signal event generation end
-        let patch = PatchSignals::new(r#"{{"generating": false}}"#);
-        let sse_event = patch.write_as_axum_sse_event();
-        yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
-    }))
+            yielder.yield_item(Ok(sse_event)).await;
+        },
+    ))
 }
 
 /// Creates one event with a given status
@@ -118,27 +120,29 @@ async fn event(
     ReadSignals(signals): ReadSignals<Signals>,
 ) -> impl IntoResponse {
     // Create the event stream, since we're patching both an element and a signal.
-    Sse::new(stream_fn(move |mut yielder| async move {
-        // Signal the updated event counts
-        let total = signals.total + 1;
-        let signals = match status {
-            Status::Done => format!(r#"{{"total": {total}, "done": {}}}"#, signals.done + 1),
-            Status::Warn => format!(r#"{{"total": {total}, "warn": {}}}"#, signals.warn + 1),
-            Status::Fail => format!(r#"{{"total": {total}, "fail": {}}}"#, signals.fail + 1),
-            Status::Info => format!(r#"{{"total": {total}, "info": {}}}"#, signals.info + 1),
-        };
-        let patch = PatchSignals::new(signals);
-        let sse_signal = patch.write_as_axum_sse_event();
-        yielder.yield_item(Ok::<_, Infallible>(sse_signal)).await;
+    Sse::new(stream_fn(
+        move |mut yielder: Yielder<Result<Event, Infallible>>| async move {
+            // Signal the updated event counts
+            let total = signals.total + 1;
+            let signals = match status {
+                Status::Done => format!(r#"{{"total": {total}, "done": {}}}"#, signals.done + 1),
+                Status::Warn => format!(r#"{{"total": {total}, "warn": {}}}"#, signals.warn + 1),
+                Status::Fail => format!(r#"{{"total": {total}, "fail": {}}}"#, signals.fail + 1),
+                Status::Info => format!(r#"{{"total": {total}, "info": {}}}"#, signals.info + 1),
+            };
+            let patch = PatchSignals::new(signals);
+            let sse_signal = patch.write_as_axum_sse_event();
+            yielder.yield_item(Ok(sse_signal)).await;
 
-        // Patch an element and append it to the feed
-        let elements = event_entry(&status, total, "Manual");
-        let patch = PatchElements::new(elements)
-            .selector("#feed")
-            .mode(ElementPatchMode::After);
-        let sse_event = patch.write_as_axum_sse_event();
-        yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
-    }))
+            // Patch an element and append it to the feed
+            let elements = event_entry(&status, total, "Manual");
+            let patch = PatchElements::new(elements)
+                .selector("#feed")
+                .mode(ElementPatchMode::After);
+            let sse_event = patch.write_as_axum_sse_event();
+            yielder.yield_item(Ok(sse_event)).await;
+        },
+    ))
 }
 
 /// Returns an HTML string for the entry

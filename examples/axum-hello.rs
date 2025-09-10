@@ -1,8 +1,8 @@
 use {
-    asynk_strim::stream_fn,
+    asynk_strim::{Yielder, stream_fn},
     axum::{
         Router,
-        response::{Html, IntoResponse, Sse},
+        response::{Html, IntoResponse, Sse, sse::Event},
         routing::get,
     },
     core::{convert::Infallible, error::Error, time::Duration},
@@ -49,15 +49,17 @@ pub struct Signals {
 }
 
 async fn hello_world(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoResponse {
-    Sse::new(stream_fn(move |mut yielder| async move {
-        for i in 0..MESSAGE.len() {
-            let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
-            let patch = PatchElements::new(elements);
-            let sse_event = patch.write_as_axum_sse_event();
+    Sse::new(stream_fn(
+        move |mut yielder: Yielder<Result<Event, Infallible>>| async move {
+            for i in 0..MESSAGE.len() {
+                let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
+                let patch = PatchElements::new(elements);
+                let sse_event = patch.write_as_axum_sse_event();
 
-            yielder.yield_item(Ok::<_, Infallible>(sse_event)).await;
+                yielder.yield_item(Ok(sse_event)).await;
 
-            tokio::time::sleep(Duration::from_millis(signals.delay)).await;
-        }
-    }))
+                tokio::time::sleep(Duration::from_millis(signals.delay)).await;
+            }
+        },
+    ))
 }
