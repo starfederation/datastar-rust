@@ -68,8 +68,8 @@ pub enum ElementPatchMode {
 }
 
 impl ElementPatchMode {
-    /// Returns the [`ElementPatchMode`] as a string.
-    pub(crate) const fn as_str(&self) -> &str {
+    /// Returns the [`ElementPatchMode`] as a [`&'static str`].
+    pub(crate) const fn as_str(&self) -> &'static str {
         match self {
             Self::Outer => "outer",
             Self::Inner => "inner",

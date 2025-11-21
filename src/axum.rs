@@ -213,3 +213,35 @@ where
         Ok(Self(json))
     }
 }
+
+/// Datastar's headers
+pub mod header {
+    use {
+        crate::consts::ElementPatchMode,
+        axum::http::{HeaderName, HeaderValue},
+    };
+
+    /// A CSS selector for the target elements to patch
+    pub const DATASTAR_SELECTOR: HeaderName = HeaderName::from_static("datastar-selector");
+
+    /// How to patch the elements (See [`ElementPatchMode`]). Defaults to [`ElementPatchMode::Outer`].
+    pub const DATASTAR_MODE: HeaderName = HeaderName::from_static("datastar-mode");
+
+    /// Whether to use the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API) when patching elements.
+    pub const DATASTAR_USE_VIEW_TRANSITION: HeaderName =
+        HeaderName::from_static("datastar-use-view-transition");
+
+    /// If set to true, only patch signals that don’t already exist
+    pub const DATASTAR_ONLY_IF_MISSING: HeaderName =
+        HeaderName::from_static("datastar-only-if-missing");
+
+    /// Sets the script element’s attributes using a JSON encoded string.
+    pub const DATASTAR_SCRIPT_ATTRIBUTES: HeaderName =
+        HeaderName::from_static("datastar-script-attributes");
+
+    impl From<ElementPatchMode> for HeaderValue {
+        fn from(value: ElementPatchMode) -> Self {
+            HeaderValue::from_static(value.as_str())
+        }
+    }
+}
