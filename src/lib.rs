@@ -7,6 +7,8 @@
 pub mod axum;
 #[cfg(feature = "rocket")]
 pub mod rocket;
+#[cfg(feature = "warp")]
+pub mod warp;
 
 pub mod execute_script;
 pub mod patch_elements;

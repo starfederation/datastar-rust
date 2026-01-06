@@ -5,7 +5,7 @@
         <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
         <script
             type="module"
-            src="https://cdn.jsdelivr.net/gh/starfederation/datastar@main/bundles/datastar.js"
+            src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.7/bundles/datastar.js"
         ></script>
     </head>
     <body class="bg-white dark:bg-gray-900 text-lg max-w-xl mx-auto my-16">
@@ -20,8 +20,8 @@
             <div class="space-x-2">
                 <input
                     id="events"
-                    data-signals-events="200"
-                    data-bind-events
+                    data-signals:events="200"
+                    data-bind:events
                     type="number"
                     step="100"
                     min="0"
@@ -32,8 +32,8 @@
             <div class="space-x-2">
                 <input
                     id="interval"
-                    data-signals-interval="10"
-                    data-bind-interval
+                    data-signals:interval="10"
+                    data-bind:interval
                     type="number"
                     step="10"
                     min="0"
@@ -43,9 +43,9 @@
             </div>
             <button
                 id="start-button"
-                data-on-click="@post(&#39;/event/generate&#39;)"
-                data-signals-generating="false"
-                data-attr-disabled="$generating"
+                data-on:click="@post('/event/generate')"
+                data-signals:generating="false"
+                data-attr:disabled="$generating"
                 data-class="{
                     'bg-gray-500 text-gray-300 cursor-wait': $generating,
                     'bg-sky-500 text-white cursor-pointer hover:bg-sky-700 hover:text-gray-100': !$generating,
@@ -56,25 +56,25 @@
             </button>
             <span>&nbsp;|&nbsp;</span>
             <button
-                data-on-click="@post(&#39;/event/done&#39;)"
+                data-on:click="@post('/event/done')"
                 class="rounded-md bg-sky-500 px-5 py-2.5 leading-5 font-semibold text-white hover:bg-sky-700 hover:text-gray-100 cursor-pointer"
             >
                 Done
             </button>
             <button
-                data-on-click="@post(&#39;/event/warn&#39;)"
+                data-on:click="@post('/event/warn')"
                 class="rounded-md bg-sky-500 px-5 py-2.5 leading-5 font-semibold text-white hover:bg-sky-700 hover:text-gray-100 cursor-pointer"
             >
                 Warn
             </button>
             <button
-                data-on-click="@post(&#39;/event/fail&#39;)"
+                data-on:click="@post('/event/fail')"
                 class="rounded-md bg-sky-500 px-5 py-2.5 leading-5 font-semibold text-white hover:bg-sky-700 hover:text-gray-100 cursor-pointer"
             >
                 Fail
             </button>
             <button
-                data-on-click="@post(&#39;/event/info&#39;)"
+                data-on:click="@post('/event/info')"
                 class="rounded-md bg-sky-500 px-5 py-2.5 leading-5 font-semibold text-white hover:bg-sky-700 hover:text-gray-100 cursor-pointer"
             >
                 Info
@@ -85,15 +85,15 @@
                 Click <code class="text-fuchsia-600">Generate</code> to create
                 <span data-text="$events">200</span> events, <span data-text="$interval">10</span> milliseconds
                 apart.<br />
-                <span class="text-gray-100" data-signals-total="0"> Total: <span data-text="$total">0</span> </span>
+                <span class="text-gray-100" data-signals:total="0"> Total: <span data-text="$total">0</span> </span>
                 |
-                <span class="text-green-500" data-signals-done="0"> Done: <span data-text="$done">0</span> </span>
+                <span class="text-green-500" data-signals:done="0"> Done: <span data-text="$done">0</span> </span>
                 |
-                <span class="text-yellow-500" data-signals-warn="0"> Warn: <span data-text="$warn">0</span> </span>
+                <span class="text-yellow-500" data-signals:warn="0"> Warn: <span data-text="$warn">0</span> </span>
                 |
-                <span class="text-red-500" data-signals-fail="0"> Fail: <span data-text="$fail">0</span> </span>
+                <span class="text-red-500" data-signals:fail="0"> Fail: <span data-text="$fail">0</span> </span>
                 |
-                <span class="text-blue-500" data-signals-info="0"> Info: <span data-text="$info">0</span> </span>
+                <span class="text-blue-500" data-signals:info="0"> Info: <span data-text="$info">0</span> </span>
                 <br />
                 -------------------------------------------------------------
             </div>
