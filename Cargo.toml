@@ -8,7 +8,7 @@ description = "Datastar SDK for Rust"
 documentation = "https://docs.rs/datastar"
 edition = "2024"
 homepage = "https://data-star.dev"
-keywords = ["datastar", "backend", "axum", "rocket"]
+keywords = ["datastar", "backend", "axum", "rocket", "warp"]
 license = "MIT"
 name = "datastar"
 readme = "README.md"
@@ -25,6 +25,7 @@ axum = ["dep:axum", "dep:serde", "dep:serde_json"]
 http2 = []
 rocket = ["dep:rocket"]
 tracing = ["dep:tracing"]
+warp = ["dep:warp", "dep:serde", "dep:serde_json", "dep:serde_urlencoded", "dep:bytes"]
 
 [dependencies]
 axum = { version = "0.8.4", default-features = false, optional = true, features = [
@@ -41,6 +42,9 @@ serde_json = { version = "1", default-features = false, optional = true, feature
     "std",
 ] }
 tracing = { version = "0.1.41", optional = true }
+warp = { version = "0.4.2", default-features = false, optional = true, features = ["server"] }
+serde_urlencoded = { version = "0.7", optional = true }
+bytes = { version = "1", optional = true }
 
 [dev-dependencies]
 asynk-strim = { version = "0.1" }
@@ -55,6 +59,7 @@ tokio-stream = { version = "0.1.17" }
 tracing = { version = "0.1.41" }
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tracing-test = { version = "0.2.5" }
+warp = { version = "0.4.2" }
 
 [lints.rust]
 unreachable_pub = "deny"
@@ -122,3 +127,15 @@ required-features = ["rocket"]
 [[example]]
 name = "rocket-hello-channel"
 required-features = ["rocket"]
+
+[[example]]
+name = "warp-hello"
+required-features = ["warp", "tracing"]
+
+[[example]]
+name = "warp-activity-feed"
+required-features = ["warp", "tracing"]
+
+[[example]]
+name = "warp-test-suite"
+required-features = ["warp", "tracing"]
