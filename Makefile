@@ -55,7 +55,6 @@ detect-unused-deps:
 	cargo machete --skip-target-dir
 
 update-deps:
-	cargo upgrade
 	cargo upgrades
 	cargo update
 
@@ -73,6 +72,15 @@ activity-feed-axum:
 
 test-suite-axum:
 	cargo run --example axum-test-suite --features axum,tracing
+
+hello-warp:
+	cargo run --example warp-hello --features warp,tracing
+
+activity-feed-warp:
+	cargo run --example warp-activity-feed --features warp,tracing
+
+test-suite-warp:
+	cargo run --example warp-test-suite --features warp,tracing
 
 hello-rocket:
 	cargo run --example rocket-hello --features rocket
