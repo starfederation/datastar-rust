@@ -83,7 +83,7 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
     Sse::new(stream_fn(
         move |mut yielder: Yielder<Result<Event, Infallible>>| async move {
             // Signal event generation start
-            let patch = PatchSignals::new(r#"{{"generating": true}}"#);
+            let patch = PatchSignals::new(r#"{"generating": true}"#);
             let sse_event = patch.write_as_axum_sse_event();
             yielder.yield_item(Ok(sse_event)).await;
 
@@ -107,7 +107,7 @@ async fn generate(ReadSignals(signals): ReadSignals<Signals>) -> impl IntoRespon
             }
 
             // Signal event generation end
-            let patch = PatchSignals::new(r#"{{"generating": false}}"#);
+            let patch = PatchSignals::new(r#"{"generating": false}"#);
             let sse_event = patch.write_as_axum_sse_event();
             yielder.yield_item(Ok(sse_event)).await;
         },
