@@ -194,7 +194,7 @@ where
     T: DeserializeOwned,
 {
     match method {
-        Method::GET => {
+        Method::GET | Method::DELETE => {
             // Parse ?datastar={json} from query string
             let params: DatastarParam = serde_urlencoded::from_str(&query).map_err(|err| {
                 #[cfg(feature = "tracing")]
