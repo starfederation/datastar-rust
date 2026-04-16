@@ -31,6 +31,7 @@ pub(crate) const ELEMENTS_DATALINE_LITERAL: &str = "elements";
 pub(crate) const USE_VIEW_TRANSITION_DATALINE_LITERAL: &str = "useViewTransition";
 pub(crate) const SIGNALS_DATALINE_LITERAL: &str = "signals";
 pub(crate) const ONLY_IF_MISSING_DATALINE_LITERAL: &str = "onlyIfMissing";
+pub(crate) const NAMESPACE_DATALINE_LITERAL: &str = "namespace";
 
 // #endregion
 
@@ -97,6 +98,28 @@ impl EventType {
         match self {
             Self::PatchElements => "datastar-patch-elements",
             Self::PatchSignals => "datastar-patch-signals",
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+/// The namespace in which elements are created
+pub enum NameSpace {
+    /// HTML namespace for standard HTML
+    #[default]
+    Html,
+    /// SVG namespace for SVG elements.
+    Svg,
+    /// MathML namespace for mathematical notation.
+    Mathml,
+}
+
+impl NameSpace {
+    pub(crate) const fn as_str(&self) -> &str {
+        match self {
+            NameSpace::Html => "html",
+            NameSpace::Svg => "svg",
+            NameSpace::Mathml => "mathml",
         }
     }
 }

@@ -327,7 +327,7 @@ dependencies = [
 
 [[package]]
 name = "datastar"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "asynk-strim",
  "axum",
@@ -2382,7 +2382,7 @@ checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
  "valuable",
-]
+]/
 
 [[package]]
 name = "tracing-log"

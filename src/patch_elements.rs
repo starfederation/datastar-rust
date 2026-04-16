@@ -2,8 +2,7 @@
 
 use {
     crate::{
-        DatastarEvent,
-        consts::{self, ElementPatchMode},
+        consts::{self, ElementPatchMode, NameSpace}, DatastarEvent
     },
     core::time::Duration,
 };
@@ -30,6 +29,9 @@ pub struct PatchElements {
     pub mode: ElementPatchMode,
     /// Whether to use view transitions, if not provided the Datastar client side will default to `false`.
     pub use_view_transition: bool,
+    /// The namespace in which elements are created.
+    /// If not provided that Datastar client side will default to [`NameSpace::Html`]
+    pub namespace: NameSpace,
 }
 
 impl PatchElements {
@@ -42,6 +44,7 @@ impl PatchElements {
             selector: None,
             mode: ElementPatchMode::default(),
             use_view_transition: consts::DEFAULT_ELEMENTS_USE_VIEW_TRANSITIONS,
+            namespace: NameSpace::default(),
         }
     }
 
@@ -54,6 +57,7 @@ impl PatchElements {
             selector: Some(selector.into()),
             mode: ElementPatchMode::Remove,
             use_view_transition: consts::DEFAULT_ELEMENTS_USE_VIEW_TRANSITIONS,
+            namespace: NameSpace::default()
         }
     }
 
@@ -84,6 +88,12 @@ impl PatchElements {
     /// Sets the `use_view_transition` of the [`PatchElements`] event.
     pub fn use_view_transition(mut self, use_view_transition: bool) -> Self {
         self.use_view_transition = use_view_transition;
+        self
+    }
+
+    /// Sets the `namespace` of the [`PatchElements`] event.
+    pub fn namespace(mut self, namespace: NameSpace) -> Self {
+        self.namespace = namespace;
         self
     }
 
@@ -125,6 +135,10 @@ impl PatchElements {
                 consts::USE_VIEW_TRANSITION_DATALINE_LITERAL,
                 self.use_view_transition
             ));
+        }
+
+        if self.namespace != NameSpace::default() {
+            data.push(format!("{} {}", consts::NAMESPACE_DATALINE_LITERAL, self.namespace.as_str()))
         }
 
         if let Some(ref elements) = self.elements {
