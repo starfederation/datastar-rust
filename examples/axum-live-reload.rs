@@ -53,7 +53,7 @@ async fn index() -> Html<&'static str> {
         Box::new(INDEX_HTML.replace(
             r##"<!-- hot reload -->"##,
             r##"
-    <div id="hotreload" data-on-load="@get('/hotreload', {retryMaxCount: 1000,retryInterval:20, retryMaxWaitMs:200})" class="text-yellow-500">
+    <div id="hotreload" data-init="@get('/hotreload', {retryInterval: 100, retry: 'always'})" class="text-yellow-500">
         <p>a minimal implementation of dev-only live reload added into axum hello example</p>
     </div>"##
         )).leak()
