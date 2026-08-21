@@ -80,6 +80,9 @@ jobs:
           - framework: warp
             example: warp-test-suite
             features: warp,tracing
+          - framework: rocket
+            example: rocket-test-suite
+            features: rocket
     name: sdk-tests (${{matrix.framework}})
     runs-on: ubuntu-latest
     steps:

@@ -1,11 +1,11 @@
 use {
     core::time::Duration,
-    datastar::prelude::PatchElements,
+    datastar::{prelude::PatchElements, rocket::ReadSignals},
     rocket::{
         Shutdown, State, get, launch,
         response::{content::RawHtml, stream::Event, stream::EventStream},
         routes,
-        serde::{Deserialize, json::Json},
+        serde::Deserialize,
         tokio::sync::watch,
     },
 };
@@ -30,13 +30,13 @@ struct Signals {
     delay: u64,
 }
 
-#[get("/set-delay?<datastar>")]
+#[get("/set-delay")]
 fn set_delay(
-    datastar: Json<Signals>,
+    signals: ReadSignals<Signals>,
     signals_channel: &State<(watch::Sender<Signals>, watch::Receiver<Signals>)>,
 ) {
     let (tx, _) = &**signals_channel;
-    let _ = tx.send(datastar.into_inner());
+    let _ = tx.send(signals.0);
 }
 
 #[get("/hello-world")]

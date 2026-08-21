@@ -1,11 +1,11 @@
 use {
     core::time::Duration,
-    datastar::prelude::PatchElements,
+    datastar::{prelude::PatchElements, rocket::ReadSignals},
     rocket::{
         get, launch,
         response::{content::RawHtml, stream::EventStream},
         routes,
-        serde::{Deserialize, json::Json},
+        serde::Deserialize,
     },
 };
 
@@ -27,8 +27,8 @@ struct Signals {
     delay: u64,
 }
 
-#[get("/hello-world?<datastar>")]
-fn hello_world(datastar: Json<Signals>) -> EventStream![] {
+#[get("/hello-world")]
+fn hello_world(signals: ReadSignals<Signals>) -> EventStream![] {
     EventStream! {
         for i in 0..MESSAGE.len() {
             let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
@@ -37,7 +37,7 @@ fn hello_world(datastar: Json<Signals>) -> EventStream![] {
 
             yield sse_event;
 
-            rocket::tokio::time::sleep(Duration::from_millis(datastar.delay)).await;
+            rocket::tokio::time::sleep(Duration::from_millis(signals.0.delay)).await;
         }
     }
 }

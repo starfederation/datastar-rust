@@ -22,7 +22,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 axum = ["dep:axum", "dep:serde", "dep:serde_json"]
-rocket = ["dep:rocket"]
+rocket = ["dep:rocket", "rocket/json"]
 tracing = ["dep:tracing"]
 warp = [
     "dep:warp",
@@ -62,7 +62,7 @@ indexmap = { version = "2.11", default-features = false, features = [
     "serde",
     "std",
 ] }
-rocket = { version = "0.5", default-features = false, features = ["json"] }
+rocket = { version = "0.5", default-features = false }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["std"] }
 tokio = { version = "1", default-features = false, features = [
@@ -149,6 +149,10 @@ required-features = ["rocket"]
 
 [[example]]
 name = "rocket-hello-channel"
+required-features = ["rocket"]
+
+[[example]]
+name = "rocket-test-suite"
 required-features = ["rocket"]
 
 [[example]]
