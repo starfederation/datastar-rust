@@ -22,7 +22,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 axum = ["dep:axum", "dep:serde", "dep:serde_json"]
-http2 = []
 rocket = ["dep:rocket"]
 tracing = ["dep:tracing"]
 warp = [
@@ -36,11 +35,9 @@ warp = [
 [dependencies]
 axum = { version = "0.8.5", default-features = false, optional = true, features = [
     "query",
-    "tokio",
     "json",
 ] }
-bytes = { version = "1", optional = true }
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
+bytes = { version = "1", default-features = false, optional = true }
 rocket = { version = "0.5", default-features = false, optional = true }
 serde = { version = "1", default-features = false, optional = true, features = [
     "derive",
@@ -48,24 +45,40 @@ serde = { version = "1", default-features = false, optional = true, features = [
 serde_json = { version = "1", default-features = false, optional = true, features = [
     "std",
 ] }
-serde_urlencoded = { version = "0.7", optional = true }
-tracing = { version = "0.1", optional = true }
-warp = { version = "0.4", default-features = false, optional = true, features = ["server"] }
+serde_urlencoded = { version = "0.7", default-features = false, optional = true }
+tracing = { version = "0.1", default-features = false, optional = true, features = [
+    "std",
+] }
+warp = { version = "0.4", default-features = false, optional = true }
 
 [dev-dependencies]
 asynk-strim = { version = "0.1" }
-axum = { version = "0.8.5" }
-indexmap = { version = "2.11", features = ["serde"] }
-reqwest = { version = "0.13", features = ["json", "stream"] }
-rocket = { version = "0.5", features = ["json"] }
+axum = { version = "0.8.5", default-features = false, features = [
+    "http1",
+    "tokio",
+] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+indexmap = { version = "2.11", default-features = false, features = [
+    "serde",
+    "std",
+] }
+rocket = { version = "0.5", default-features = false, features = ["json"] }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["std"] }
-tokio = { version = "1", features = ["full"] }
-tokio-stream = { version = "0.1" }
-tracing = { version = "0.1" }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tracing-test = { version = "0.2" }
-warp = { version = "0.4", features = ["test"] }
+tokio = { version = "1", default-features = false, features = [
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "sync",
+    "time",
+] }
+tokio-stream = { version = "0.1", default-features = false }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "env-filter",
+    "fmt",
+] }
+warp = { version = "0.4", default-features = false, features = ["test"] }
 
 [lints.rust]
 unreachable_pub = "deny"
@@ -75,7 +88,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing)'] }
 [lints.clippy]
 all = { level = "warn", priority = -1 }
 todo = "warn"
-empty_enum = "warn"
+empty_enums = "warn"
 enum_glob_use = "warn"
 mem_forget = "warn"
 unused_self = "warn"

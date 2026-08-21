@@ -50,7 +50,7 @@ impl DatalineWriter for Vec<String> {
 
 /// [`DatastarEvent`] is a struct that represents a generic Datastar event.
 /// All Datastar events implement `Into<DatastarEvent>`.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DatastarEvent {
     /// `event` is the type of event.
     pub event: consts::EventType,
@@ -63,6 +63,33 @@ pub struct DatastarEvent {
     pub retry: Duration,
     /// `data` is the data that is sent with the event.
     pub data: Vec<String>,
+}
+
+impl DatastarEvent {
+    /// Creates a new Datastar event with the default SSE retry duration.
+    pub fn new(
+        event: consts::EventType,
+        data: impl IntoIterator<Item = impl Into<String>>,
+    ) -> Self {
+        Self {
+            event,
+            id: None,
+            retry: Duration::from_millis(consts::DEFAULT_SSE_RETRY_DURATION),
+            data: data.into_iter().map(Into::into).collect(),
+        }
+    }
+
+    /// Sets the event ID used by the browser for replay handling.
+    pub fn id(mut self, id: impl Into<String>) -> Self {
+        self.id = Some(id.into());
+        self
+    }
+
+    /// Sets the reconnection delay for this event.
+    pub fn retry(mut self, retry: Duration) -> Self {
+        self.retry = retry;
+        self
+    }
 }
 
 impl Display for DatastarEvent {

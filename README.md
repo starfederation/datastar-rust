@@ -3,6 +3,10 @@
 An implementation of the [Datastar] SDK in Rust
 with framework integration for [Axum], [Rocket], and [Warp].
 
+Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
+intentionally returns framework-native events instead of providing a
+`ServerSentEventGenerator`.
+
 [Rama](https://github.com/plabayo/rama) has its own SDK implementation defined as a [Rama module for Datastar](https://ramaproxy.org/docs/rama/http/sse/datastar/index.html) as can be seen in action in [this example](https://github.com/plabayo/rama/blob/main/examples/http_sse_datastar_hello.rs).
 
 # Usage
