@@ -1,4 +1,21 @@
-//! Datastar is a Rust implementation of the [Datastar](https://data-star.dev) SDK specification.
+//! Rust SDK for building [Datastar](https://data-star.dev) server-sent events.
+//!
+//! Use its event types to patch HTML or signals and execute scripts in the
+//! browser. Enable [Axum], [Rocket], or [Warp] for framework-native events and
+//! signal extraction.
+//!
+//! Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
+//! returns framework-native events instead of providing a
+//! `ServerSentEventGenerator`.
+//!
+//! [Rama], a modular framework for building network clients, servers, and
+//! proxies, provides its own [Datastar SDK module].
+//!
+//! [Axum]: https://github.com/tokio-rs/axum
+//! [Rocket]: https://github.com/rwf2/rocket
+//! [Warp]: https://github.com/seanmonstar/warp
+//! [Rama]: https://github.com/plabayo/rama
+//! [Datastar SDK module]: https://ramaproxy.org/docs/rama/http/sse/datastar/index.html
 
 #![forbid(missing_docs)]
 #![forbid(missing_debug_implementations)]
