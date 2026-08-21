@@ -123,6 +123,10 @@ name = "axum-activity-feed"
 required-features = ["axum", "tracing"]
 
 [[example]]
+name = "axum-watch"
+required-features = ["axum"]
+
+[[example]]
 name = "axum-test-suite"
 required-features = ["axum", "tracing"]
 

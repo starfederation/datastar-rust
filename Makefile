@@ -14,9 +14,13 @@ all:
 	@echo "detect-unused-deps            - detect unused deps for removal"
 	@echo "hello-axum                    - run hello-world example using the Axum framework"
 	@echo "activity-feed-axum            - run activity-feed example using the Axum framework"
+	@echo "watch-axum                    - run watch channel example using the Axum framework"
 	@echo "test-suite-axum               - run test-suite example runner using the Axum framework"
 	@echo "hello-rocket                  - run hello-world example using the Rocket framework"
 	@echo "hello-channel-rocket          - run hello-world w/ a channel example using the Rocket framework"
+	@echo "hello-warp                    - run hello-world example using the Warp framework"
+	@echo "activity-feed-warp            - run activity-feed example using the Warp framework"
+	@echo "test-suite-warp               - run test-suite example runner using the Warp framework"
 .PHONY:
 
 fmt:
@@ -69,6 +73,9 @@ watch-live-reload-axum:
 
 activity-feed-axum:
 	cargo run --example axum-activity-feed --features axum,tracing
+
+watch-axum:
+	cargo run --example axum-watch --features axum
 
 test-suite-axum:
 	cargo run --example axum-test-suite --features axum,tracing

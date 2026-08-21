@@ -173,6 +173,14 @@ struct DatastarParam {
 
 /// [`ReadSignals`] is a request extractor that reads datastar signals from the request.
 ///
+/// GET and DELETE requests read signals from the `datastar` query parameter.
+/// A missing parameter is treated as JSON `null`, allowing
+/// `ReadSignals<Option<T>>` to produce `None`. Other methods read signals from
+/// the JSON request body.
+///
+/// When the extractor itself is optional, `Option<ReadSignals<T>>` produces
+/// `None` if the `datastar-request` header is absent.
+///
 /// # Examples
 ///
 /// ```

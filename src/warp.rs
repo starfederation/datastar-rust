@@ -153,8 +153,10 @@ pub struct ReadSignals<T>(pub T);
 
 /// Creates a Warp Filter that extracts Datastar signals from the request.
 ///
-/// For GET requests, signals are extracted from the `datastar` query parameter.
-/// For POST/PUT/PATCH requests, signals are extracted from the JSON body.
+/// For GET and DELETE requests, signals are extracted from the `datastar` query
+/// parameter. A missing parameter is treated as JSON `null`, allowing
+/// `ReadSignals<Option<T>>` to produce `None`. For POST, PUT, and PATCH
+/// requests, signals are extracted from the JSON body.
 ///
 /// # Examples
 ///
