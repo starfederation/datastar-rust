@@ -1,5 +1,11 @@
 # Datastar Rust SDK
 
+[![Crates.io](https://img.shields.io/crates/v/datastar.svg)](https://crates.io/crates/datastar)
+[![Documentation](https://docs.rs/datastar/badge.svg)](https://docs.rs/datastar)
+[![CI](https://github.com/starfederation/datastar-rust/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/starfederation/datastar-rust/actions/workflows/CI.yml)
+![MSRV](https://img.shields.io/badge/MSRV-1.89.0-blue.svg)
+[![License](https://img.shields.io/crates/l/datastar.svg)](./LICENSE.md)
+
 An implementation of the [Datastar] SDK in Rust
 with framework integration for [Axum], [Rocket], and [Warp].
 
