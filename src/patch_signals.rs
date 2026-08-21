@@ -108,3 +108,42 @@ impl From<PatchSignals> for DatastarEvent {
         val.into_datastar_event()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn patch() -> PatchSignals {
+        PatchSignals::new("{foo: 1,\nbar: 2}")
+            .id("signals-1")
+            .retry(Duration::from_millis(2_000))
+            .only_if_missing(true)
+    }
+
+    fn assert_event(event: DatastarEvent) {
+        assert_eq!(event.event, consts::EventType::PatchSignals);
+        assert_eq!(event.id.as_deref(), Some("signals-1"));
+        assert_eq!(event.retry, Duration::from_millis(2_000));
+        assert_eq!(
+            event.data,
+            ["onlyIfMissing true", "signals {foo: 1,", "signals bar: 2}"]
+        );
+    }
+
+    #[test]
+    fn serializes_options_and_conversions() {
+        let patch = patch();
+
+        assert_event(patch.as_datastar_event());
+        assert_event(DatastarEvent::from(&patch));
+        assert_event(patch.clone().into_datastar_event());
+        assert_event(DatastarEvent::from(patch));
+    }
+
+    #[test]
+    fn omits_default_options() {
+        let event = PatchSignals::new("{foo: 1}").into_datastar_event();
+
+        assert_eq!(event.data, ["signals {foo: 1}"]);
+    }
+}

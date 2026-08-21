@@ -237,4 +237,22 @@ mod tests {
 
         assert_eq!(event.data, ["elements <div id=\"message\">Hello</div>"]);
     }
+
+    #[test]
+    fn serializes_removal_and_conversions() {
+        let patch = PatchElements::new_remove("#message")
+            .id("elements-1")
+            .retry(Duration::from_millis(2_000));
+
+        for event in [
+            patch.as_datastar_event(),
+            DatastarEvent::from(&patch),
+            patch.clone().into_datastar_event(),
+            DatastarEvent::from(patch),
+        ] {
+            assert_eq!(event.id.as_deref(), Some("elements-1"));
+            assert_eq!(event.retry, Duration::from_millis(2_000));
+            assert_eq!(event.data, ["selector #message", "mode remove"]);
+        }
+    }
 }

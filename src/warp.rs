@@ -331,3 +331,155 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> 
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use {super::*, crate::consts::ElementPatchMode, core::time::Duration, serde::Deserialize};
+
+    fn assert_event(event: Event, expected: &str) {
+        assert_eq!(event.to_string(), expected);
+    }
+
+    #[test]
+    fn writes_patch_elements_and_conversions() {
+        let patch = PatchElements::new("<div>one</div>\n<div>two</div>")
+            .id("elements-1")
+            .retry(Duration::from_millis(2_500))
+            .selector("#main")
+            .mode(ElementPatchMode::Append);
+        let expected = concat!(
+            "event:datastar-patch-elements\n",
+            "data:selector #main\n",
+            "data:mode append\n",
+            "data:elements <div>one</div>\n",
+            "data:elements <div>two</div>\n",
+            "id:elements-1\n",
+            "retry:2500\n\n",
+        );
+
+        assert_event(patch.write_as_warp_sse_event(), expected);
+        assert_event(Event::from(&patch), expected);
+        assert_event(Event::from(patch), expected);
+    }
+
+    #[test]
+    fn writes_patch_signals_and_conversions() {
+        let patch = PatchSignals::new("{count: 1}").only_if_missing(true);
+        let expected = concat!(
+            "event:datastar-patch-signals\n",
+            "data:onlyIfMissing true\n",
+            "data:signals {count: 1}\n\n",
+        );
+
+        assert_event(patch.write_as_warp_sse_event(), expected);
+        assert_event(Event::from(&patch), expected);
+        assert_event(Event::from(patch), expected);
+    }
+
+    #[test]
+    fn writes_execute_script_and_conversions() {
+        let script = ExecuteScript::new("console.log('hello')");
+        let expected = concat!(
+            "event:datastar-patch-elements\n",
+            "data:selector body\n",
+            "data:mode append\n",
+            "data:elements <script data-effect=\"el.remove()\">",
+            "console.log('hello')</script>\n\n",
+        );
+
+        assert_event(script.write_as_warp_sse_event(), expected);
+        assert_event(Event::from(&script), expected);
+        assert_event(Event::from(script), expected);
+    }
+
+    #[test]
+    fn writes_generic_events_and_conversions() {
+        let event = PatchSignals::new("{count: 1}")
+            .id("signals-1")
+            .retry(Duration::from_millis(2_500))
+            .into_datastar_event();
+        let expected = concat!(
+            "event:datastar-patch-signals\n",
+            "data:signals {count: 1}\n",
+            "id:signals-1\n",
+            "retry:2500\n\n",
+        );
+
+        assert_event(event.write_as_warp_sse_event(), expected);
+        assert_event(Event::from(&event), expected);
+        assert_event(Event::from(event), expected);
+    }
+
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct TestSignals {
+        count: u64,
+    }
+
+    #[tokio::test]
+    async fn extracts_get_and_body_signals() {
+        let get = warp::test::request()
+            .method("GET")
+            .path("/?datastar=%7B%22count%22%3A7%7D")
+            .filter(&read_signals::<TestSignals>())
+            .await
+            .unwrap();
+        assert_eq!(get.0, TestSignals { count: 7 });
+
+        let post = warp::test::request()
+            .method("POST")
+            .body(r#"{"count":9}"#)
+            .filter(&read_signals::<TestSignals>())
+            .await
+            .unwrap();
+        assert_eq!(post.0, TestSignals { count: 9 });
+    }
+
+    #[tokio::test]
+    async fn handles_optional_signals_and_request_header() {
+        let present = warp::test::request()
+            .method("GET")
+            .path("/?datastar=%7B%22count%22%3A7%7D")
+            .header(DATASTAR_REQ_HEADER_STR, "true")
+            .filter(&read_signals_optional::<TestSignals>())
+            .await
+            .unwrap();
+        assert_eq!(present.unwrap().0, TestSignals { count: 7 });
+
+        let missing = warp::test::request()
+            .filter(&read_signals_optional::<TestSignals>())
+            .await
+            .unwrap();
+        assert!(missing.is_none());
+
+        let present = warp::test::request()
+            .header(DATASTAR_REQ_HEADER_STR, "true")
+            .filter(&is_datastar_request())
+            .await
+            .unwrap();
+        assert!(present);
+
+        let missing = warp::test::request()
+            .filter(&is_datastar_request())
+            .await
+            .unwrap();
+        assert!(!missing);
+    }
+
+    #[tokio::test]
+    async fn maps_signal_rejections_to_responses() {
+        let rejection = warp::test::request()
+            .method("GET")
+            .path("/?datastar=not-json")
+            .filter(&read_signals::<TestSignals>())
+            .await
+            .unwrap_err();
+        let response = handle_rejection(rejection).await.unwrap().into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        let response = handle_rejection(warp::reject::not_found())
+            .await
+            .unwrap()
+            .into_response();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+}

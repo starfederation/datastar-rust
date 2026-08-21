@@ -311,7 +311,7 @@ mod tests {
         super::*,
         crate::consts::{ElementPatchMode, Namespace},
         axum::{
-            body::to_bytes,
+            body::{Body, to_bytes},
             response::{IntoResponse, Sse},
         },
         core::convert::Infallible,
@@ -397,5 +397,91 @@ mod tests {
                 "data: elements <div>two</div>\n\n",
             )
         );
+    }
+
+    #[tokio::test]
+    async fn conversions_match_direct_writers() {
+        let elements = PatchElements::new("<div>hello</div>");
+        let expected = render(elements.write_as_axum_sse_event()).await;
+        assert_eq!(render(Event::from(&elements)).await, expected);
+        assert_eq!(render(Event::from(elements)).await, expected);
+
+        let signals = PatchSignals::new("{count: 1}");
+        let expected = render(signals.write_as_axum_sse_event()).await;
+        assert_eq!(render(Event::from(&signals)).await, expected);
+        assert_eq!(render(Event::from(signals)).await, expected);
+
+        let script = ExecuteScript::new("console.log('hello')");
+        let expected = render(script.write_as_axum_sse_event()).await;
+        assert_eq!(render(Event::from(&script)).await, expected);
+        assert_eq!(render(Event::from(script)).await, expected);
+
+        let generic = PatchElements::new("<div>hello</div>").into_datastar_event();
+        let expected = render(generic.write_as_axum_sse_event()).await;
+        assert_eq!(render(Event::from(&generic)).await, expected);
+        assert_eq!(render(Event::from(generic)).await, expected);
+    }
+
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct TestSignals {
+        count: u64,
+    }
+
+    #[tokio::test]
+    async fn extracts_optional_get_signals() {
+        let request = Request::builder()
+            .method(http::Method::GET)
+            .uri("/?datastar=%7B%22count%22%3A7%7D")
+            .header(DATASTAR_REQ_HEADER_STR, "true")
+            .body(Body::empty())
+            .unwrap();
+
+        let extracted =
+            <ReadSignals<TestSignals> as OptionalFromRequest<()>>::from_request(request, &())
+                .await
+                .unwrap();
+
+        assert_eq!(extracted.unwrap().0, TestSignals { count: 7 });
+    }
+
+    #[tokio::test]
+    async fn omits_optional_signals_without_header() {
+        let request = Request::builder().body(Body::empty()).unwrap();
+        let extracted =
+            <ReadSignals<TestSignals> as OptionalFromRequest<()>>::from_request(request, &())
+                .await
+                .unwrap();
+
+        assert!(extracted.is_none());
+    }
+
+    #[tokio::test]
+    async fn extracts_post_signals() {
+        let request = Request::builder()
+            .method(http::Method::POST)
+            .header(http::header::CONTENT_TYPE, "application/json")
+            .body(Body::from(r#"{"count":9}"#))
+            .unwrap();
+
+        let extracted = <ReadSignals<TestSignals> as FromRequest<()>>::from_request(request, &())
+            .await
+            .unwrap();
+
+        assert_eq!(extracted.0, TestSignals { count: 9 });
+    }
+
+    #[tokio::test]
+    async fn rejects_invalid_get_signals() {
+        let request = Request::builder()
+            .method(http::Method::GET)
+            .uri("/?datastar=not-json")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = <ReadSignals<TestSignals> as FromRequest<()>>::from_request(request, &())
+            .await
+            .unwrap_err();
+
+        assert_eq!(response.status(), http::StatusCode::BAD_REQUEST);
     }
 }

@@ -127,3 +127,33 @@ impl Namespace {
 // #endregion
 
 // #endregion
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maps_element_patch_modes() {
+        assert_eq!(ElementPatchMode::Outer.as_str(), "outer");
+        assert_eq!(ElementPatchMode::Inner.as_str(), "inner");
+        assert_eq!(ElementPatchMode::Remove.as_str(), "remove");
+        assert_eq!(ElementPatchMode::Replace.as_str(), "replace");
+        assert_eq!(ElementPatchMode::Prepend.as_str(), "prepend");
+        assert_eq!(ElementPatchMode::Append.as_str(), "append");
+        assert_eq!(ElementPatchMode::Before.as_str(), "before");
+        assert_eq!(ElementPatchMode::After.as_str(), "after");
+    }
+
+    #[test]
+    fn maps_event_types() {
+        assert_eq!(EventType::PatchElements.as_str(), "datastar-patch-elements");
+        assert_eq!(EventType::PatchSignals.as_str(), "datastar-patch-signals");
+    }
+
+    #[test]
+    fn maps_namespaces() {
+        assert_eq!(Namespace::Html.as_str(), "html");
+        assert_eq!(Namespace::Svg.as_str(), "svg");
+        assert_eq!(Namespace::MathMl.as_str(), "mathml");
+    }
+}

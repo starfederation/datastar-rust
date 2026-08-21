@@ -175,3 +175,47 @@ impl From<ExecuteScript> for DatastarEvent {
         val.into_datastar_event()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expected_data() -> Vec<String> {
+        vec![
+            "selector body".into(),
+            "mode append".into(),
+            "elements <script type=\"module\">first".into(),
+            "elements second</script>".into(),
+        ]
+    }
+
+    #[test]
+    fn serializes_script_options_and_conversions() {
+        let script = ExecuteScript::new("first\nsecond")
+            .id("script-1")
+            .retry(Duration::from_millis(2_000))
+            .auto_remove(false)
+            .attributes([r#"type="module""#]);
+
+        let borrowed = script.as_datastar_event();
+        assert_eq!(borrowed.id.as_deref(), Some("script-1"));
+        assert_eq!(borrowed.retry, Duration::from_millis(2_000));
+        assert_eq!(borrowed.data, expected_data());
+        assert_eq!(DatastarEvent::from(&script).data, expected_data());
+        assert_eq!(DatastarEvent::from(script).data, expected_data());
+    }
+
+    #[test]
+    fn serializes_empty_script_with_defaults() {
+        let event = ExecuteScript::new("").into_datastar_event();
+
+        assert_eq!(
+            event.data,
+            [
+                "selector body",
+                "mode append",
+                r#"elements <script data-effect="el.remove()"></script>"#,
+            ]
+        );
+    }
+}

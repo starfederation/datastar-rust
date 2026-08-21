@@ -65,7 +65,7 @@ tokio-stream = { version = "0.1" }
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-test = { version = "0.2" }
-warp = { version = "0.4" }
+warp = { version = "0.4", features = ["test"] }
 
 [lints.rust]
 unreachable_pub = "deny"

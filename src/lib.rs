@@ -87,3 +87,47 @@ impl Display for DatastarEvent {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use {super::*, crate::consts::EventType};
+
+    #[test]
+    fn formats_default_sse_metadata() {
+        let event = DatastarEvent {
+            event: EventType::PatchSignals,
+            id: None,
+            retry: Duration::from_millis(consts::DEFAULT_SSE_RETRY_DURATION),
+            data: vec!["signals {count: 1}".into()],
+        };
+
+        assert_eq!(
+            event.to_string(),
+            "event: datastar-patch-signals\ndata: signals {count: 1}\n\n"
+        );
+    }
+
+    #[test]
+    fn formats_custom_sse_metadata_and_multiline_data() {
+        let event = DatastarEvent {
+            event: EventType::PatchElements,
+            id: Some("event-1".into()),
+            retry: Duration::from_millis(2_500),
+            data: vec![
+                "elements <div>one</div>".into(),
+                "elements <div>two</div>".into(),
+            ],
+        };
+
+        assert_eq!(
+            event.to_string(),
+            concat!(
+                "event: datastar-patch-elements\n",
+                "id: event-1\n",
+                "retry: 2500\n",
+                "data: elements <div>one</div>\n",
+                "data: elements <div>two</div>\n\n",
+            )
+        );
+    }
+}
