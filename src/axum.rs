@@ -218,7 +218,7 @@ where
 
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let json = match *req.method() {
-            http::Method::GET => {
+            http::Method::GET | http::Method::DELETE => {
                 let query = Query::<DatastarParam>::from_request(req, state)
                     .await
                     .map_err(IntoResponse::into_response)?;
@@ -442,6 +442,21 @@ mod tests {
                 .unwrap();
 
         assert_eq!(extracted.unwrap().0, TestSignals { count: 7 });
+    }
+
+    #[tokio::test]
+    async fn extracts_delete_signals_from_query() {
+        let request = Request::builder()
+            .method(http::Method::DELETE)
+            .uri("/?datastar=%7B%22count%22%3A8%7D")
+            .body(Body::empty())
+            .unwrap();
+
+        let extracted = <ReadSignals<TestSignals> as FromRequest<()>>::from_request(request, &())
+            .await
+            .unwrap();
+
+        assert_eq!(extracted.0, TestSignals { count: 8 });
     }
 
     #[tokio::test]

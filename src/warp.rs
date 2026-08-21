@@ -425,6 +425,14 @@ mod tests {
             .unwrap();
         assert_eq!(get.0, TestSignals { count: 7 });
 
+        let delete = warp::test::request()
+            .method("DELETE")
+            .path("/?datastar=%7B%22count%22%3A8%7D")
+            .filter(&read_signals::<TestSignals>())
+            .await
+            .unwrap();
+        assert_eq!(delete.0, TestSignals { count: 8 });
+
         let post = warp::test::request()
             .method("POST")
             .body(r#"{"count":9}"#)
