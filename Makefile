@@ -53,7 +53,7 @@ hack:
 test:
 	cargo test --all-features
 
-qa: lint check clippy doc test
+qa: lint check clippy doc hack test
 
 detect-unused-deps:
 	# https://github.com/bnjbvr/cargo-machete

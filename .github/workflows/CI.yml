@@ -30,6 +30,21 @@ jobs:
       - name: rustfmt
         run: |
           make fmt-check
+      - name: docs
+        run: |
+          make doc
+
+  msrv:
+    needs: [check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN_MSRV}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Check minimum supported Rust version
+        run: cargo check --all-targets --all-features
 
   test:
     needs: [check]
@@ -164,3 +179,27 @@ jobs:
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
           rust-toolchain: ${{env.RUST_TOOLCHAIN}}
+
+  dependency-policy:
+    needs: [check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: taiki-e/install-action@cargo-deny
+      - name: Check advisories, licenses, bans, and sources
+        run: cargo deny check
+
+  package:
+    needs: [check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{env.RUST_TOOLCHAIN}}
+      - uses: Swatinem/rust-cache@v2
+      - name: Verify release package
+        run: cargo package --locked
