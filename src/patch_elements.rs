@@ -2,10 +2,10 @@
 
 use {
     crate::{
-        DatastarEvent,
+        DatalineWriter, DatastarEvent,
         consts::{self, ElementPatchMode, Namespace},
     },
-    core::time::Duration,
+    core::{fmt, time::Duration},
 };
 
 /// [`PatchElements`] patches HTML elements into the DOM.
@@ -122,52 +122,8 @@ impl PatchElements {
 
     fn convert_to_datastar_event_inner(&self, id: Option<String>) -> DatastarEvent {
         let mut data: Vec<String> = Vec::new();
-
-        if let Some(selector) = &self.selector {
-            data.push(format!(
-                "{} {}",
-                consts::SELECTOR_DATALINE_LITERAL,
-                selector
-            ));
-        }
-
-        if self.mode != ElementPatchMode::default() {
-            data.push(format!(
-                "{} {}",
-                consts::MODE_DATALINE_LITERAL,
-                self.mode.as_str()
-            ));
-        }
-
-        if self.use_view_transition != consts::DEFAULT_ELEMENTS_USE_VIEW_TRANSITIONS {
-            data.push(format!(
-                "{} {}",
-                consts::USE_VIEW_TRANSITION_DATALINE_LITERAL,
-                self.use_view_transition
-            ));
-
-            if let Some(selector) = &self.view_transition_selector {
-                data.push(format!(
-                    "{} {}",
-                    consts::VIEW_TRANSITION_SELECTOR_DATALINE_LITERAL,
-                    selector
-                ));
-            }
-        }
-
-        if self.namespace != Namespace::default() {
-            data.push(format!(
-                "{} {}",
-                consts::NAMESPACE_DATALINE_LITERAL,
-                self.namespace.as_str()
-            ));
-        }
-
-        if let Some(ref elements) = self.elements {
-            for line in elements.lines() {
-                data.push(format!("{} {}", consts::ELEMENTS_DATALINE_LITERAL, line));
-            }
-        }
+        self.write_datalines(&mut data)
+            .expect("writing datalines to a Vec cannot fail");
 
         DatastarEvent {
             event: consts::EventType::PatchElements,
@@ -175,6 +131,60 @@ impl PatchElements {
             retry: self.retry,
             data,
         }
+    }
+
+    pub(crate) fn write_datalines(&self, writer: &mut impl DatalineWriter) -> fmt::Result {
+        if let Some(selector) = &self.selector {
+            writer.write_dataline(format_args!(
+                "{} {}",
+                consts::SELECTOR_DATALINE_LITERAL,
+                selector
+            ))?;
+        }
+
+        if self.mode != ElementPatchMode::default() {
+            writer.write_dataline(format_args!(
+                "{} {}",
+                consts::MODE_DATALINE_LITERAL,
+                self.mode.as_str()
+            ))?;
+        }
+
+        if self.use_view_transition != consts::DEFAULT_ELEMENTS_USE_VIEW_TRANSITIONS {
+            writer.write_dataline(format_args!(
+                "{} {}",
+                consts::USE_VIEW_TRANSITION_DATALINE_LITERAL,
+                self.use_view_transition
+            ))?;
+
+            if let Some(selector) = &self.view_transition_selector {
+                writer.write_dataline(format_args!(
+                    "{} {}",
+                    consts::VIEW_TRANSITION_SELECTOR_DATALINE_LITERAL,
+                    selector
+                ))?;
+            }
+        }
+
+        if self.namespace != Namespace::default() {
+            writer.write_dataline(format_args!(
+                "{} {}",
+                consts::NAMESPACE_DATALINE_LITERAL,
+                self.namespace.as_str()
+            ))?;
+        }
+
+        if let Some(ref elements) = self.elements {
+            for line in elements.lines() {
+                writer.write_dataline(format_args!(
+                    "{} {}",
+                    consts::ELEMENTS_DATALINE_LITERAL,
+                    line
+                ))?;
+            }
+        }
+
+        Ok(())
     }
 }
 

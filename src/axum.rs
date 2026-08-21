@@ -2,6 +2,7 @@
 
 use {
     crate::{
+        DatalineWriter,
         consts::{self, DATASTAR_REQ_HEADER_STR},
         prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
     },
@@ -10,16 +11,74 @@ use {
         body::Bytes,
         extract::{FromRequest, OptionalFromRequest, Query, Request},
         http::{self},
-        response::{IntoResponse, Response, sse::Event},
+        response::{
+            IntoResponse, Response,
+            sse::{Event, EventDataWriter},
+        },
     },
+    core::time::Duration,
     serde::{Deserialize, de::DeserializeOwned},
-    std::fmt::Write,
+    std::fmt::{self, Write},
 };
+
+struct AxumDatalineWriter {
+    writer: EventDataWriter,
+    wrote_dataline: bool,
+}
+
+impl AxumDatalineWriter {
+    fn new(writer: EventDataWriter) -> Self {
+        Self {
+            writer,
+            wrote_dataline: false,
+        }
+    }
+
+    fn into_event(self) -> Event {
+        self.writer.into_event()
+    }
+}
+
+impl DatalineWriter for AxumDatalineWriter {
+    fn write_dataline(&mut self, args: fmt::Arguments<'_>) -> fmt::Result {
+        if std::mem::replace(&mut self.wrote_dataline, true) {
+            self.writer.write_char('\n')?;
+        }
+        self.writer.write_fmt(args)
+    }
+}
+
+fn write_axum_event(
+    event_type: consts::EventType,
+    id: Option<&str>,
+    retry: Duration,
+    write_datalines: impl FnOnce(&mut AxumDatalineWriter) -> fmt::Result,
+) -> Event {
+    let event = Event::default().event(event_type.as_str());
+    let event = if retry.as_millis() != (consts::DEFAULT_SSE_RETRY_DURATION as u128) {
+        event.retry(retry)
+    } else {
+        event
+    };
+    let event = match id {
+        Some(id) => event.id(id),
+        None => event,
+    };
+
+    let mut writer = AxumDatalineWriter::new(event.into_data_writer());
+    write_datalines(&mut writer).expect("Axum's EventDataWriter is infallible");
+    writer.into_event()
+}
 
 impl PatchElements {
     /// Write this [`PatchElements`] into an Axum SSE [`Event`].
     pub fn write_as_axum_sse_event(&self) -> Event {
-        self.as_datastar_event().write_as_axum_sse_event()
+        write_axum_event(
+            consts::EventType::PatchElements,
+            self.id.as_deref(),
+            self.retry,
+            |writer| self.write_datalines(writer),
+        )
     }
 }
 
@@ -38,7 +97,12 @@ impl From<&PatchElements> for Event {
 impl PatchSignals {
     /// Write this [`PatchSignals`] into an Axum SSE [`Event`].
     pub fn write_as_axum_sse_event(&self) -> Event {
-        self.as_datastar_event().write_as_axum_sse_event()
+        write_axum_event(
+            consts::EventType::PatchSignals,
+            self.id.as_deref(),
+            self.retry,
+            |writer| self.write_datalines(writer),
+        )
     }
 }
 
@@ -57,7 +121,12 @@ impl From<&PatchSignals> for Event {
 impl ExecuteScript {
     /// Write this [`ExecuteScript`] into an Axum SSE [`Event`].
     pub fn write_as_axum_sse_event(&self) -> Event {
-        self.as_datastar_event().write_as_axum_sse_event()
+        write_axum_event(
+            consts::EventType::PatchElements,
+            self.id.as_deref(),
+            self.retry,
+            |writer| self.write_datalines(writer),
+        )
     }
 }
 
@@ -76,31 +145,12 @@ impl From<&ExecuteScript> for Event {
 impl DatastarEvent {
     /// Turn this [`DatastarEvent`] into an Axum SSE [`Event`].
     pub fn write_as_axum_sse_event(&self) -> Event {
-        let event = Event::default().event(self.event.as_str());
-
-        let event = if self.retry.as_millis() != (consts::DEFAULT_SSE_RETRY_DURATION as u128) {
-            event.retry(self.retry)
-        } else {
-            event
-        };
-
-        let event = match self.id.as_deref() {
-            Some(id) => event.id(id),
-            None => event,
-        };
-
-        let mut data = String::with_capacity(
-            (self.data.iter().map(|s| s.len()).sum::<usize>() + self.data.len()).saturating_sub(1),
-        );
-
-        let mut sep = "";
-        for line in self.data.iter() {
-            // Assumption: std::fmt::write does not fail ever for [`String`].
-            let _ = write!(&mut data, "{sep}{line}");
-            sep = "\n";
-        }
-
-        event.data(data)
+        write_axum_event(self.event, self.id.as_deref(), self.retry, |writer| {
+            for line in &self.data {
+                writer.write_dataline(format_args!("{line}"))?;
+            }
+            Ok(())
+        })
     }
 }
 
@@ -252,5 +302,100 @@ pub mod header {
         fn from(value: Namespace) -> Self {
             HeaderValue::from_static(value.as_str())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        crate::consts::{ElementPatchMode, Namespace},
+        axum::{
+            body::to_bytes,
+            response::{IntoResponse, Sse},
+        },
+        core::convert::Infallible,
+        tokio_stream::iter,
+    };
+
+    async fn render(event: Event) -> String {
+        let response = Sse::new(iter([Ok::<_, Infallible>(event)])).into_response();
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        String::from_utf8(body.to_vec()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn writes_patch_elements_directly() {
+        let event = PatchElements::new("<circle id=\"dot\" />\n<path />")
+            .id("elements-1")
+            .retry(Duration::from_millis(2_000))
+            .selector("#vis")
+            .mode(ElementPatchMode::Append)
+            .use_view_transition(true)
+            .view_transition_selector("#main")
+            .namespace(Namespace::Svg);
+
+        assert_eq!(
+            render(event.write_as_axum_sse_event()).await,
+            concat!(
+                "event: datastar-patch-elements\n",
+                "retry: 2000\n",
+                "id: elements-1\n",
+                "data: selector #vis\n",
+                "data: mode append\n",
+                "data: useViewTransition true\n",
+                "data: viewTransitionSelector #main\n",
+                "data: namespace svg\n",
+                "data: elements <circle id=\"dot\" />\n",
+                "data: elements <path />\n\n",
+            )
+        );
+    }
+
+    #[tokio::test]
+    async fn writes_patch_signals_directly() {
+        let event = PatchSignals::new("{foo: 1,\nbar: 2}").only_if_missing(true);
+
+        assert_eq!(
+            render(event.write_as_axum_sse_event()).await,
+            concat!(
+                "event: datastar-patch-signals\n",
+                "data: onlyIfMissing true\n",
+                "data: signals {foo: 1,\n",
+                "data: signals bar: 2}\n\n",
+            )
+        );
+    }
+
+    #[tokio::test]
+    async fn writes_execute_script_directly() {
+        let event = ExecuteScript::new("console.log('one')\nconsole.log('two')")
+            .auto_remove(false)
+            .attributes([r#"type="module""#, "defer"]);
+
+        assert_eq!(
+            render(event.write_as_axum_sse_event()).await,
+            concat!(
+                "event: datastar-patch-elements\n",
+                "data: selector body\n",
+                "data: mode append\n",
+                "data: elements <script type=\"module\" defer>console.log('one')\n",
+                "data: elements console.log('two')</script>\n\n",
+            )
+        );
+    }
+
+    #[tokio::test]
+    async fn writes_generic_events_without_joining_data() {
+        let event = PatchElements::new("<div>one</div>\n<div>two</div>").as_datastar_event();
+
+        assert_eq!(
+            render(event.write_as_axum_sse_event()).await,
+            concat!(
+                "event: datastar-patch-elements\n",
+                "data: elements <div>one</div>\n",
+                "data: elements <div>two</div>\n\n",
+            )
+        );
     }
 }

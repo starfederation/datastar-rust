@@ -1,8 +1,8 @@
 //! [`PatchSignals`] patches signals into the signal store.
 
 use {
-    crate::{DatastarEvent, consts},
-    core::time::Duration,
+    crate::{DatalineWriter, DatastarEvent, consts},
+    core::{fmt, time::Duration},
 };
 
 /// [`PatchSignals`] patches signals into the signal store.
@@ -67,18 +67,8 @@ impl PatchSignals {
 
     fn convert_to_datastar_event_inner(&self, id: Option<String>) -> DatastarEvent {
         let mut data: Vec<String> = Vec::new();
-
-        if self.only_if_missing != consts::DEFAULT_PATCH_SIGNALS_ONLY_IF_MISSING {
-            data.push(format!(
-                "{} {}",
-                consts::ONLY_IF_MISSING_DATALINE_LITERAL,
-                self.only_if_missing
-            ));
-        }
-
-        for line in self.signals.lines() {
-            data.push(format!("{} {line}", consts::SIGNALS_DATALINE_LITERAL));
-        }
+        self.write_datalines(&mut data)
+            .expect("writing datalines to a Vec cannot fail");
 
         DatastarEvent {
             event: consts::EventType::PatchSignals,
@@ -86,6 +76,22 @@ impl PatchSignals {
             retry: self.retry,
             data,
         }
+    }
+
+    pub(crate) fn write_datalines(&self, writer: &mut impl DatalineWriter) -> fmt::Result {
+        if self.only_if_missing != consts::DEFAULT_PATCH_SIGNALS_ONLY_IF_MISSING {
+            writer.write_dataline(format_args!(
+                "{} {}",
+                consts::ONLY_IF_MISSING_DATALINE_LITERAL,
+                self.only_if_missing
+            ))?;
+        }
+
+        for line in self.signals.lines() {
+            writer.write_dataline(format_args!("{} {line}", consts::SIGNALS_DATALINE_LITERAL))?;
+        }
+
+        Ok(())
     }
 }
 

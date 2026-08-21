@@ -32,7 +32,21 @@ pub mod prelude {
     };
 }
 
-use core::{fmt::Display, time::Duration};
+use core::{
+    fmt::{self, Display},
+    time::Duration,
+};
+
+pub(crate) trait DatalineWriter {
+    fn write_dataline(&mut self, args: fmt::Arguments<'_>) -> fmt::Result;
+}
+
+impl DatalineWriter for Vec<String> {
+    fn write_dataline(&mut self, args: fmt::Arguments<'_>) -> fmt::Result {
+        self.push(args.to_string());
+        Ok(())
+    }
+}
 
 /// [`DatastarEvent`] is a struct that represents a generic Datastar event.
 /// All Datastar events implement `Into<DatastarEvent>`.

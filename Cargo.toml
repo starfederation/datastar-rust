@@ -34,7 +34,7 @@ warp = [
 ]
 
 [dependencies]
-axum = { version = "0.8", default-features = false, optional = true, features = [
+axum = { version = "0.8.5", default-features = false, optional = true, features = [
     "query",
     "tokio",
     "json",
@@ -54,7 +54,7 @@ warp = { version = "0.4", default-features = false, optional = true, features = 
 
 [dev-dependencies]
 asynk-strim = { version = "0.1" }
-axum = { version = "0.8.4" }
+axum = { version = "0.8.5" }
 indexmap = { version = "2.11", features = ["serde"] }
 reqwest = { version = "0.13", features = ["json", "stream"] }
 rocket = { version = "0.5", features = ["json"] }

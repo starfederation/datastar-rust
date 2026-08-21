@@ -4,10 +4,10 @@
 
 use {
     crate::{
-        DatastarEvent,
+        DatalineWriter, DatastarEvent,
         consts::{self, ElementPatchMode},
     },
-    core::time::Duration,
+    core::{fmt, time::Duration},
 };
 
 /// [`ExecuteScript`] executes JavaScript in the browser
@@ -80,37 +80,8 @@ impl ExecuteScript {
 
     fn convert_to_datastar_event_inner(&self, id: Option<String>) -> DatastarEvent {
         let mut data: Vec<String> = Vec::new();
-
-        data.push(format!("{} body", consts::SELECTOR_DATALINE_LITERAL));
-
-        data.push(format!(
-            "{} {}",
-            consts::MODE_DATALINE_LITERAL,
-            ElementPatchMode::Append.as_str(),
-        ));
-
-        let mut s = format!("{} <script", consts::ELEMENTS_DATALINE_LITERAL);
-
-        if self.auto_remove.unwrap_or(true) {
-            s.push_str(r##" data-effect="el.remove()""##);
-        }
-
-        for attribute in &self.attributes {
-            s.push(' ');
-            s.push_str(attribute.as_str());
-        }
-
-        let mut scripts_lines = self.script.lines();
-
-        s.push('>');
-        s.push_str(scripts_lines.next().unwrap_or_default());
-        data.push(s);
-
-        for line in scripts_lines {
-            data.push(format!("{} {}", consts::ELEMENTS_DATALINE_LITERAL, line));
-        }
-
-        data.last_mut().unwrap().push_str("</script>");
+        self.write_datalines(&mut data)
+            .expect("writing datalines to a Vec cannot fail");
 
         DatastarEvent {
             event: consts::EventType::PatchElements,
@@ -118,6 +89,76 @@ impl ExecuteScript {
             retry: self.retry,
             data,
         }
+    }
+
+    pub(crate) fn write_datalines(&self, writer: &mut impl DatalineWriter) -> fmt::Result {
+        writer.write_dataline(format_args!("{} body", consts::SELECTOR_DATALINE_LITERAL))?;
+
+        writer.write_dataline(format_args!(
+            "{} {}",
+            consts::MODE_DATALINE_LITERAL,
+            ElementPatchMode::Append.as_str(),
+        ))?;
+
+        let mut script_lines = self.script.lines().peekable();
+        let first_line = script_lines.next().unwrap_or_default();
+        let close = script_lines.peek().is_none();
+
+        writer.write_dataline(format_args!(
+            "{} {}",
+            consts::ELEMENTS_DATALINE_LITERAL,
+            ScriptOpeningLine {
+                script: self,
+                first_line,
+                close,
+            }
+        ))?;
+
+        while let Some(line) = script_lines.next() {
+            let closing_tag = if script_lines.peek().is_none() {
+                "</script>"
+            } else {
+                ""
+            };
+            writer.write_dataline(format_args!(
+                "{} {}{}",
+                consts::ELEMENTS_DATALINE_LITERAL,
+                line,
+                closing_tag
+            ))?;
+        }
+
+        Ok(())
+    }
+}
+
+struct ScriptOpeningLine<'a> {
+    script: &'a ExecuteScript,
+    first_line: &'a str,
+    close: bool,
+}
+
+impl fmt::Display for ScriptOpeningLine<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("<script")?;
+
+        if self.script.auto_remove.unwrap_or(true) {
+            f.write_str(r##" data-effect="el.remove()""##)?;
+        }
+
+        for attribute in &self.script.attributes {
+            f.write_str(" ")?;
+            f.write_str(attribute)?;
+        }
+
+        f.write_str(">")?;
+        f.write_str(self.first_line)?;
+
+        if self.close {
+            f.write_str("</script>")?;
+        }
+
+        Ok(())
     }
 }
 
