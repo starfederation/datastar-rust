@@ -115,7 +115,7 @@ impl From<&DatastarEvent> for Event {
 
 #[derive(Deserialize)]
 struct DatastarParam {
-    datastar: serde_json::Value,
+    datastar: Option<serde_json::Value>,
 }
 
 /// Error type for [`ReadSignals`] extraction failures.
@@ -206,12 +206,15 @@ where
                 })
             })?;
 
-            let signals_str = params.datastar.as_str().ok_or_else(|| {
-                warp::reject::custom(ReadSignalsError {
-                    message: "datastar parameter must be a JSON string".into(),
-                    status: StatusCode::BAD_REQUEST,
-                })
-            })?;
+            let signals_str = match params.datastar.as_ref() {
+                Some(value) => value.as_str().ok_or_else(|| {
+                    warp::reject::custom(ReadSignalsError {
+                        message: "datastar parameter must be a JSON string".into(),
+                        status: StatusCode::BAD_REQUEST,
+                    })
+                })?,
+                None => "null",
+            };
 
             let signals: T = serde_json::from_str(signals_str).map_err(|err| {
                 #[cfg(feature = "tracing")]
@@ -471,6 +474,24 @@ mod tests {
             .await
             .unwrap();
         assert!(!missing);
+    }
+
+    #[tokio::test]
+    async fn handles_missing_get_signals() {
+        let optional = warp::test::request()
+            .method("GET")
+            .filter(&read_signals::<Option<TestSignals>>())
+            .await
+            .unwrap();
+        assert_eq!(optional.0, None);
+
+        let rejection = warp::test::request()
+            .method("GET")
+            .filter(&read_signals::<TestSignals>())
+            .await
+            .unwrap_err();
+        let response = handle_rejection(rejection).await.unwrap().into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
 
     #[tokio::test]

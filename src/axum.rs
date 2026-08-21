@@ -168,7 +168,7 @@ impl From<&DatastarEvent> for Event {
 
 #[derive(Deserialize)]
 struct DatastarParam {
-    datastar: serde_json::Value,
+    datastar: Option<serde_json::Value>,
 }
 
 /// [`ReadSignals`] is a request extractor that reads datastar signals from the request.
@@ -223,9 +223,12 @@ where
                     .await
                     .map_err(IntoResponse::into_response)?;
 
-                let signals = query.0.datastar.as_str().ok_or(
-                    (http::StatusCode::BAD_REQUEST, "Failed to parse JSON str").into_response(),
-                )?;
+                let signals = match query.0.datastar.as_ref() {
+                    Some(value) => value.as_str().ok_or(
+                        (http::StatusCode::BAD_REQUEST, "Failed to parse JSON str").into_response(),
+                    )?,
+                    None => "null",
+                };
 
                 serde_json::from_str(signals).map_err(
                     #[cfg_attr(not(feature = "tracing"), expect(unused_variables))]
@@ -457,6 +460,37 @@ mod tests {
             .unwrap();
 
         assert_eq!(extracted.0, TestSignals { count: 8 });
+    }
+
+    #[tokio::test]
+    async fn extracts_missing_get_signals_as_none() {
+        let request = Request::builder()
+            .method(http::Method::GET)
+            .uri("/")
+            .body(Body::empty())
+            .unwrap();
+
+        let extracted =
+            <ReadSignals<Option<TestSignals>> as FromRequest<()>>::from_request(request, &())
+                .await
+                .unwrap();
+
+        assert_eq!(extracted.0, None);
+    }
+
+    #[tokio::test]
+    async fn rejects_missing_required_get_signals() {
+        let request = Request::builder()
+            .method(http::Method::GET)
+            .uri("/")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = <ReadSignals<TestSignals> as FromRequest<()>>::from_request(request, &())
+            .await
+            .unwrap_err();
+
+        assert_eq!(response.status(), http::StatusCode::BAD_REQUEST);
     }
 
     #[tokio::test]
