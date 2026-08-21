@@ -24,8 +24,11 @@ pub mod consts;
 /// The prelude for the `datastar` crate
 pub mod prelude {
     pub use crate::{
-        DatastarEvent, consts::ElementPatchMode, execute_script::ExecuteScript,
-        patch_elements::PatchElements, patch_signals::PatchSignals,
+        DatastarEvent,
+        consts::{ElementPatchMode, Namespace},
+        execute_script::ExecuteScript,
+        patch_elements::PatchElements,
+        patch_signals::PatchSignals,
     };
 }
 

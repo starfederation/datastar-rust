@@ -217,7 +217,7 @@ where
 /// Datastar's headers
 pub mod header {
     use {
-        crate::consts::ElementPatchMode,
+        crate::consts::{ElementPatchMode, Namespace},
         axum::http::{HeaderName, HeaderValue},
     };
 
@@ -231,6 +231,9 @@ pub mod header {
     pub const DATASTAR_USE_VIEW_TRANSITION: HeaderName =
         HeaderName::from_static("datastar-use-view-transition");
 
+    /// The namespace in which elements are created.
+    pub const DATASTAR_NAMESPACE: HeaderName = HeaderName::from_static("datastar-namespace");
+
     /// If set to true, only patch signals that don’t already exist
     pub const DATASTAR_ONLY_IF_MISSING: HeaderName =
         HeaderName::from_static("datastar-only-if-missing");
@@ -241,6 +244,12 @@ pub mod header {
 
     impl From<ElementPatchMode> for HeaderValue {
         fn from(value: ElementPatchMode) -> Self {
+            HeaderValue::from_static(value.as_str())
+        }
+    }
+
+    impl From<Namespace> for HeaderValue {
+        fn from(value: Namespace) -> Self {
             HeaderValue::from_static(value.as_str())
         }
     }

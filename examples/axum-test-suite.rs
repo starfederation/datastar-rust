@@ -71,6 +71,9 @@ pub enum TestCaseEvent {
         mode: Option<String>,
         #[serde(alias = "useViewTransition")]
         use_view_transition: Option<bool>,
+        #[serde(alias = "viewTransitionSelector")]
+        view_transition_selector: Option<String>,
+        namespace: Option<String>,
     },
     #[serde(rename = "patchSignals")]
     PatchSignals {
@@ -124,6 +127,8 @@ async fn test(ReadSignals(test_case): ReadSignals<TestCase>) -> impl IntoRespons
                         mode,
                         selector,
                         use_view_transition,
+                        view_transition_selector,
+                        namespace,
                     } => PatchElements {
                         id: event_id,
                         retry: Duration::from_millis(
@@ -143,6 +148,12 @@ async fn test(ReadSignals(test_case): ReadSignals<TestCase>) -> impl IntoRespons
                             _ => consts::ElementPatchMode::Outer,
                         },
                         use_view_transition: use_view_transition.unwrap_or_default(),
+                        view_transition_selector,
+                        namespace: match namespace.as_deref().unwrap_or_default() {
+                            "svg" => consts::Namespace::Svg,
+                            "mathml" => consts::Namespace::MathMl,
+                            _ => consts::Namespace::Html,
+                        },
                     }
                     .into_datastar_event()
                     .write_as_axum_sse_event(),

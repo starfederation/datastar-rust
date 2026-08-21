@@ -7,8 +7,6 @@
 pub(crate) const DATASTAR_KEY: &str = "datastar";
 #[allow(unused)]
 pub(crate) const DATASTAR_REQ_HEADER_STR: &str = "datastar-request";
-#[expect(unused)]
-pub(crate) const VERSION: &str = "1.0.0-RC.1";
 
 // #region Defaults
 
@@ -29,6 +27,8 @@ pub(crate) const SELECTOR_DATALINE_LITERAL: &str = "selector";
 pub(crate) const MODE_DATALINE_LITERAL: &str = "mode";
 pub(crate) const ELEMENTS_DATALINE_LITERAL: &str = "elements";
 pub(crate) const USE_VIEW_TRANSITION_DATALINE_LITERAL: &str = "useViewTransition";
+pub(crate) const VIEW_TRANSITION_SELECTOR_DATALINE_LITERAL: &str = "viewTransitionSelector";
+pub(crate) const NAMESPACE_DATALINE_LITERAL: &str = "namespace";
 pub(crate) const SIGNALS_DATALINE_LITERAL: &str = "signals";
 pub(crate) const ONLY_IF_MISSING_DATALINE_LITERAL: &str = "onlyIfMissing";
 
@@ -82,6 +82,7 @@ impl ElementPatchMode {
         }
     }
 }
+
 /// The type protocol on top of SSE which allows for core pushed based communication between the server and the client.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EventType {
@@ -97,6 +98,29 @@ impl EventType {
         match self {
             Self::PatchElements => "datastar-patch-elements",
             Self::PatchSignals => "datastar-patch-signals",
+        }
+    }
+}
+
+/// The namespace in which elements are created.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Namespace {
+    /// HTML namespace for standard HTML elements.
+    #[default]
+    Html,
+    /// SVG namespace for SVG elements.
+    Svg,
+    /// MathML namespace for mathematical notation.
+    MathMl,
+}
+
+impl Namespace {
+    /// Returns the [`Namespace`] as a [`&'static str`].
+    pub(crate) const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Html => "html",
+            Self::Svg => "svg",
+            Self::MathMl => "mathml",
         }
     }
 }

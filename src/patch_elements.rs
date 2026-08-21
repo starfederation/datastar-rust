@@ -3,7 +3,7 @@
 use {
     crate::{
         DatastarEvent,
-        consts::{self, ElementPatchMode},
+        consts::{self, ElementPatchMode, Namespace},
     },
     core::time::Duration,
 };
@@ -30,6 +30,10 @@ pub struct PatchElements {
     pub mode: ElementPatchMode,
     /// Whether to use view transitions, if not provided the Datastar client side will default to `false`.
     pub use_view_transition: bool,
+    /// The CSS selector for the element whose scoped view transition should be used.
+    pub view_transition_selector: Option<String>,
+    /// The namespace in which elements are created.
+    pub namespace: Namespace,
 }
 
 impl PatchElements {
@@ -42,6 +46,8 @@ impl PatchElements {
             selector: None,
             mode: ElementPatchMode::default(),
             use_view_transition: consts::DEFAULT_ELEMENTS_USE_VIEW_TRANSITIONS,
+            view_transition_selector: None,
+            namespace: Namespace::default(),
         }
     }
 
@@ -54,6 +60,8 @@ impl PatchElements {
             selector: Some(selector.into()),
             mode: ElementPatchMode::Remove,
             use_view_transition: consts::DEFAULT_ELEMENTS_USE_VIEW_TRANSITIONS,
+            view_transition_selector: None,
+            namespace: Namespace::default(),
         }
     }
 
@@ -84,6 +92,18 @@ impl PatchElements {
     /// Sets the `use_view_transition` of the [`PatchElements`] event.
     pub fn use_view_transition(mut self, use_view_transition: bool) -> Self {
         self.use_view_transition = use_view_transition;
+        self
+    }
+
+    /// Sets the selector for the element whose scoped view transition should be used.
+    pub fn view_transition_selector(mut self, selector: impl Into<String>) -> Self {
+        self.view_transition_selector = Some(selector.into());
+        self
+    }
+
+    /// Sets the namespace in which elements are created.
+    pub fn namespace(mut self, namespace: Namespace) -> Self {
+        self.namespace = namespace;
         self
     }
 
@@ -125,6 +145,22 @@ impl PatchElements {
                 consts::USE_VIEW_TRANSITION_DATALINE_LITERAL,
                 self.use_view_transition
             ));
+
+            if let Some(selector) = &self.view_transition_selector {
+                data.push(format!(
+                    "{} {}",
+                    consts::VIEW_TRANSITION_SELECTOR_DATALINE_LITERAL,
+                    selector
+                ));
+            }
+        }
+
+        if self.namespace != Namespace::default() {
+            data.push(format!(
+                "{} {}",
+                consts::NAMESPACE_DATALINE_LITERAL,
+                self.namespace.as_str()
+            ));
         }
 
         if let Some(ref elements) = self.elements {
@@ -153,5 +189,42 @@ impl From<PatchElements> for DatastarEvent {
     #[inline]
     fn from(val: PatchElements) -> Self {
         val.into_datastar_event()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serializes_current_patch_options() {
+        let event = PatchElements::new("<circle id=\"dot\" />")
+            .selector("#vis")
+            .mode(ElementPatchMode::Append)
+            .use_view_transition(true)
+            .view_transition_selector("#main")
+            .namespace(Namespace::Svg)
+            .into_datastar_event();
+
+        assert_eq!(
+            event.data,
+            [
+                "selector #vis",
+                "mode append",
+                "useViewTransition true",
+                "viewTransitionSelector #main",
+                "namespace svg",
+                "elements <circle id=\"dot\" />",
+            ]
+        );
+    }
+
+    #[test]
+    fn omits_default_and_inactive_options() {
+        let event = PatchElements::new("<div id=\"message\">Hello</div>")
+            .view_transition_selector("#main")
+            .into_datastar_event();
+
+        assert_eq!(event.data, ["elements <div id=\"message\">Hello</div>"]);
     }
 }
