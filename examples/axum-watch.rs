@@ -141,7 +141,7 @@ const INDEX_HTML: &str = r#"<!doctype html>
     <head>
         <meta charset="utf-8">
         <title>Datastar watch channels</title>
-        <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.2/bundles/datastar.js"></script>
+        <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.3/bundles/datastar.js"></script>
     </head>
     <body>
         <main data-init="@get('/dashboard')">

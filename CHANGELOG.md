@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Sync examples with Datastar 1.0.3; its corrected empty scoped view-transition
+  selector default already matches the Rust SDK.
+- Make the official SDK suite reusable locally with native Go or Docker.
+
+_Thanks to the Datastar maintainers for the 1.0.3 release._
+
 ## 0.4.0 - 2026-08-21
 
 - Sync with Datastar 1.0.2, adding namespaces and scoped view transitions. The

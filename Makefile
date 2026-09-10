@@ -22,6 +22,8 @@ all:
 	@echo "hello-warp                    - run hello-world example using the Warp framework"
 	@echo "activity-feed-warp            - run activity-feed example using the Warp framework"
 	@echo "test-suite-warp               - run test-suite example runner using the Warp framework"
+	@echo "test-datastar-sdk             - run official SDK tests against all frameworks"
+	@echo "test-datastar-sdk-docker      - run official SDK tests using Docker"
 .PHONY:
 
 fmt:
@@ -52,6 +54,12 @@ hack:
 
 test:
 	cargo test --all-features
+
+test-datastar-sdk:
+	./scripts/test-datastar-sdk.sh
+
+test-datastar-sdk-docker:
+	./scripts/test-datastar-sdk.sh --docker
 
 qa: lint check clippy doc hack test
 

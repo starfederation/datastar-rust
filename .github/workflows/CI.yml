@@ -88,16 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - framework: axum
-            example: axum-test-suite
-            features: axum,tracing
-          - framework: warp
-            example: warp-test-suite
-            features: warp,tracing
-          - framework: rocket
-            example: rocket-test-suite
-            features: rocket
+        framework: [axum, rocket, warp]
     name: sdk-tests (${{matrix.framework}})
     runs-on: ubuntu-latest
     steps:
@@ -112,46 +103,8 @@ jobs:
           cache: false
       - name: Run official Datastar SDK tests
         env:
-          DATASTAR_TEST_EXAMPLE: ${{matrix.example}}
-          DATASTAR_TEST_FEATURES: ${{matrix.features}}
-        run: |
-          set -euo pipefail
-
-          server_log="$(mktemp)"
-          cargo build \
-            --example "$DATASTAR_TEST_EXAMPLE" \
-            --features "$DATASTAR_TEST_FEATURES"
-          server_path="target/debug/examples/$DATASTAR_TEST_EXAMPLE"
-          "$server_path" >"$server_log" 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
-
-          server_ready=false
-          for server_attempt in {1..60}; do
-            if curl --silent --output /dev/null http://127.0.0.1:9200/test; then
-              server_ready=true
-              break
-            fi
-            if ! kill -0 "$server_pid" 2>/dev/null; then
-              cat "$server_log"
-              exit 1
-            fi
-            sleep 1
-          done
-
-          if [[ "$server_ready" != true ]]; then
-            echo "Server did not start after $server_attempt attempts"
-            cat "$server_log"
-            exit 1
-          fi
-
-          if ! go run \
-            github.com/starfederation/datastar/sdk/tests/cmd/datastar-sdk-tests@latest \
-            -v \
-            -server http://127.0.0.1:9200; then
-            cat "$server_log"
-            exit 1
-          fi
+          DATASTAR_TEST_FRAMEWORK: ${{matrix.framework}}
+        run: ./scripts/test-datastar-sdk.sh "$DATASTAR_TEST_FRAMEWORK"
 
   dependencies-are-sorted:
     needs: [check]

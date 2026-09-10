@@ -34,6 +34,20 @@ independent `watch` channels feeding one SSE response. The
 [`rocket-hello-channel`](./examples/rocket-hello-channel.rs) example shows the
 same basic pattern with Rocket.
 
+## SDK conformance
+
+Run the official Datastar SDK suite against Axum, Rocket, and Warp with Go:
+
+```sh
+make test-datastar-sdk
+```
+
+Or run the official test runner in Docker:
+
+```sh
+make test-datastar-sdk-docker
+```
+
 [Datastar]: https://data-star.dev
 [Axum]: https://github.com/tokio-rs/axum
 [Rocket]: https://github.com/rwf2/rocket

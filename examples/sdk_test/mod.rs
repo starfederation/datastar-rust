@@ -15,44 +15,35 @@ pub(crate) struct TestCase {
 }
 
 #[derive(Deserialize)]
-#[serde(tag = "type")]
+#[serde(
+    tag = "type",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
 pub(crate) enum TestCaseEvent {
-    #[serde(alias = "executeScript")]
     ExecuteScript {
         script: String,
-        #[serde(alias = "eventId")]
         event_id: Option<String>,
-        #[serde(alias = "retryDuration")]
         retry_duration: Option<u64>,
         attributes: Option<IndexMap<String, Value>>,
-        #[serde(alias = "autoRemove")]
         auto_remove: Option<bool>,
     },
-    #[serde(rename = "patchElements")]
     PatchElements {
         elements: Option<String>,
-        #[serde(alias = "eventId")]
         event_id: Option<String>,
-        #[serde(alias = "retryDuration")]
         retry_duration: Option<u64>,
         selector: Option<String>,
         mode: Option<String>,
-        #[serde(alias = "useViewTransition")]
         use_view_transition: Option<bool>,
-        #[serde(alias = "viewTransitionSelector")]
         view_transition_selector: Option<String>,
         namespace: Option<String>,
     },
-    #[serde(rename = "patchSignals")]
     PatchSignals {
         signals: Option<IndexMap<String, Value>>,
-        #[serde(alias = "signals-raw")]
+        #[serde(rename = "signals-raw")]
         signals_raw: Option<String>,
-        #[serde(alias = "eventId")]
         event_id: Option<String>,
-        #[serde(alias = "retryDuration")]
         retry_duration: Option<u64>,
-        #[serde(alias = "onlyIfMissing")]
         only_if_missing: Option<bool>,
     },
 }

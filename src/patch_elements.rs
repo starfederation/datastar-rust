@@ -31,6 +31,7 @@ pub struct PatchElements {
     /// Whether to use view transitions, if not provided the Datastar client side will default to `false`.
     pub use_view_transition: bool,
     /// The CSS selector for the element whose scoped view transition should be used.
+    /// If not provided, Datastar defaults to an empty selector.
     pub view_transition_selector: Option<String>,
     /// The namespace in which elements are created.
     pub namespace: Namespace,
