@@ -104,7 +104,7 @@ impl From<DatastarEvent> for Sse {
 /// }
 /// ```
 pub struct Sse {
-    stream: Pin<Box<dyn Stream<Item = DatastarEvent> + Send>>,
+    stream: Pin<Box<dyn Stream<Item = DatastarEvent>>>,
 }
 
 impl std::fmt::Debug for Sse {
@@ -116,12 +116,12 @@ impl std::fmt::Debug for Sse {
 impl Sse {
     /// Create a new [`Sse`] response from a stream of [`DatastarEvent`]s.
     ///
-    /// The stream must be [`Send`] because Actix-Web dispatches handlers across
-    /// worker threads; actix's multi-threaded server would otherwise reject a
-    /// handler returning a non-`Send` response at runtime.
+    /// The stream is not required to be [`Send`]: Actix-Web runs handlers on the
+    /// worker thread rather than moving them between threads, so its own
+    /// `Handler::Future` and `HttpResponse::streaming` bounds are `!Send` too.
     pub fn new<S>(stream: S) -> Self
     where
-        S: Stream<Item = DatastarEvent> + Send + 'static,
+        S: Stream<Item = DatastarEvent> + 'static,
     {
         Self {
             stream: Box::pin(stream),
