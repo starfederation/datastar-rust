@@ -7,7 +7,7 @@ REPO_ROOT=$PWD
 RUNNER=native
 
 usage() {
-    echo "usage: $0 [--native|--docker] [all|axum|rocket|warp]"
+    echo "usage: $0 [--native|--docker] [all|actix|axum|rocket|warp]"
     echo
     echo "  --native  run the official suite with the local Go toolchain (default)"
     echo "  --docker  run the official suite with the Go Docker image"
@@ -30,8 +30,8 @@ fi
 
 FRAMEWORK=${1:-all}
 case "$FRAMEWORK" in
-    all) FRAMEWORKS=(axum rocket warp) ;;
-    axum|rocket|warp) FRAMEWORKS=("$FRAMEWORK") ;;
+    all) FRAMEWORKS=(actix axum rocket warp) ;;
+    actix|axum|rocket|warp) FRAMEWORKS=("$FRAMEWORK") ;;
     *) usage >&2; exit 2 ;;
 esac
 
@@ -147,6 +147,10 @@ run_framework() {
     local framework=$1
     local example features
     case "$framework" in
+        actix)
+            example=actix-test-suite
+            features=actix,tracing
+            ;;
         axum)
             example=axum-test-suite
             features=axum,tracing

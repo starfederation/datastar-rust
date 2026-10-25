@@ -1,7 +1,7 @@
 mod sdk_test;
 
 use {
-    actix_web::{App, HttpServer, Responder, web},
+    actix_web::{App, HttpResponse, HttpServer, Responder, http::Method, web},
     asynk_strim::{Yielder, stream_fn},
     core::error::Error,
     datastar::{
@@ -23,12 +23,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .init();
 
     HttpServer::new(|| {
-        App::new()
-            // The conformance test runner uses a combination of GET, POST, and
-            // QUERY requests. `web::route` dispatches on the method, and
-            // `ReadSignals` reads the query parameter for GET/DELETE and the
-            // JSON body otherwise.
-            .route("/test", web::route().to(test))
+        // The conformance runner uses GET, POST, and the custom QUERY method.
+        // `ReadSignals` reads the `datastar` query parameter for GET/DELETE and
+        // the JSON body otherwise. Any other method is rejected with 405.
+        let query = Method::from_bytes(b"QUERY").expect("QUERY is a valid method token");
+        App::new().service(
+            web::resource("/test")
+                .route(web::get().to(test))
+                .route(web::post().to(test))
+                .route(web::method(query).to(test))
+                .default_service(web::to(HttpResponse::MethodNotAllowed)),
+        )
     })
     .bind(("127.0.0.1", 9200))?
     .run()
