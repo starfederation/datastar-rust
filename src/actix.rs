@@ -18,6 +18,15 @@ use {
 /// streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
 impl From<PatchElements> for Sse {
     fn from(value: PatchElements) -> Self {
+        value.into_datastar_event().into()
+    }
+}
+
+/// Copy this [`PatchElements`] into an Actix-Web [`Sse`] streaming response.
+///
+/// For streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
+impl From<&PatchElements> for Sse {
+    fn from(value: &PatchElements) -> Self {
         value.as_datastar_event().into()
     }
 }
@@ -28,6 +37,15 @@ impl From<PatchElements> for Sse {
 /// streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
 impl From<PatchSignals> for Sse {
     fn from(value: PatchSignals) -> Self {
+        value.into_datastar_event().into()
+    }
+}
+
+/// Copy this [`PatchSignals`] into an Actix-Web [`Sse`] streaming response.
+///
+/// For streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
+impl From<&PatchSignals> for Sse {
+    fn from(value: &PatchSignals) -> Self {
         value.as_datastar_event().into()
     }
 }
@@ -38,6 +56,15 @@ impl From<PatchSignals> for Sse {
 /// streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
 impl From<ExecuteScript> for Sse {
     fn from(value: ExecuteScript) -> Self {
+        value.into_datastar_event().into()
+    }
+}
+
+/// Copy this [`ExecuteScript`] into an Actix-Web [`Sse`] streaming response.
+///
+/// For streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
+impl From<&ExecuteScript> for Sse {
+    fn from(value: &ExecuteScript) -> Self {
         value.as_datastar_event().into()
     }
 }
@@ -48,6 +75,15 @@ impl From<ExecuteScript> for Sse {
 impl From<DatastarEvent> for Sse {
     fn from(event: DatastarEvent) -> Self {
         Sse::new(stream::iter([event]))
+    }
+}
+
+/// Copy a [`DatastarEvent`] into a single-event [`Sse`] streaming response.
+///
+/// For streaming multiple events, use [`Sse::new`] with a stream of [`DatastarEvent`]s.
+impl From<&DatastarEvent> for Sse {
+    fn from(event: &DatastarEvent) -> Self {
+        event.clone().into()
     }
 }
 
@@ -151,6 +187,13 @@ struct DatastarParam {
 
 /// [`ReadSignals`] is a request extractor that reads datastar signals from the request.
 ///
+/// GET and DELETE requests read signals from the `datastar` query parameter.
+/// A missing parameter is treated as JSON `null`, allowing
+/// `ReadSignals<Option<T>>` to produce `None`. Other methods read signals from
+/// the JSON request body, including Datastar 1.0.4's `QUERY` method.
+/// Route `QUERY` requests with `web::method(Method::from_bytes(b"QUERY")?)`
+/// or `web::route()`; Actix-Web's method guards do not include custom methods.
+///
 /// # Examples
 ///
 /// ```
@@ -226,7 +269,7 @@ impl<T: DeserializeOwned + 'static> FromRequest for ReadSignals<T> {
 /// Datastar's headers
 pub mod header {
     use {
-        crate::consts::ElementPatchMode,
+        crate::consts::{ElementPatchMode, Namespace},
         actix_web::http::header::{HeaderName, HeaderValue},
     };
 
@@ -240,6 +283,9 @@ pub mod header {
     pub const DATASTAR_USE_VIEW_TRANSITION: HeaderName =
         HeaderName::from_static("datastar-use-view-transition");
 
+    /// The namespace in which elements are created.
+    pub const DATASTAR_NAMESPACE: HeaderName = HeaderName::from_static("datastar-namespace");
+
     /// If set to true, only patch signals that don't already exist
     pub const DATASTAR_ONLY_IF_MISSING: HeaderName =
         HeaderName::from_static("datastar-only-if-missing");
@@ -250,6 +296,12 @@ pub mod header {
 
     impl From<ElementPatchMode> for HeaderValue {
         fn from(value: ElementPatchMode) -> Self {
+            HeaderValue::from_static(value.as_str())
+        }
+    }
+
+    impl From<Namespace> for HeaderValue {
+        fn from(value: Namespace) -> Self {
             HeaderValue::from_static(value.as_str())
         }
     }

@@ -6,7 +6,7 @@ use {
         body::to_bytes,
         dev::ServiceResponse,
         http::{
-            StatusCode,
+            Method, StatusCode,
             header::{CACHE_CONTROL, CONTENT_TYPE},
         },
         test, web,
@@ -120,6 +120,37 @@ async fn streaming_multiple_events() {
     assert_eq!(event_count, 2);
     assert!(body_str.contains("elements <div>one</div>"));
     assert!(body_str.contains("elements <div>two</div>"));
+}
+
+#[actix_web::test]
+async fn borrowed_conversions_match_owned() {
+    async fn render(sse: Sse) -> String {
+        let req = test::TestRequest::get().to_http_request();
+        let body = to_bytes(sse.respond_to(&req).into_body()).await.unwrap();
+        String::from_utf8(body.to_vec()).unwrap()
+    }
+
+    let elements = PatchElements::new("<div>hi</div>").id("e1");
+    let signals = PatchSignals::new("{\"a\":1}").id("s1");
+    let script = ExecuteScript::new("console.log(1)").id("x1");
+    let event = elements.as_datastar_event();
+
+    assert_eq!(
+        render(Sse::from(&elements)).await,
+        render(Sse::from(elements)).await
+    );
+    assert_eq!(
+        render(Sse::from(&signals)).await,
+        render(Sse::from(signals)).await
+    );
+    assert_eq!(
+        render(Sse::from(&script)).await,
+        render(Sse::from(script)).await
+    );
+    assert_eq!(
+        render(Sse::from(&event)).await,
+        render(Sse::from(event)).await
+    );
 }
 
 // =============================================================================
@@ -285,4 +316,36 @@ async fn read_signals_get_query_param_populates_option() {
 
     let body = to_bytes(resp.into_body()).await.unwrap();
     assert_eq!(body, "signals");
+}
+
+#[actix_web::test]
+async fn read_signals_from_custom_query_method_body() {
+    async fn handler(ReadSignals(signals): ReadSignals<TestSignals>) -> HttpResponse {
+        HttpResponse::Ok().json(signals)
+    }
+
+    let query = Method::from_bytes(b"QUERY").unwrap();
+    let app =
+        test::init_service(App::new().route("/", web::method(query.clone()).to(handler))).await;
+
+    // QUERY reads the JSON body; a conflicting `datastar` URL parameter is ignored.
+    let req = test::TestRequest::default()
+        .method(query)
+        .uri("/?datastar=%7B%22name%22%3A%22url%22%2C%22count%22%3A0%7D")
+        .set_json(TestSignals {
+            name: "body".to_owned(),
+            count: 7,
+        })
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let got: TestSignals = test::read_body_json(resp).await;
+    assert_eq!(
+        got,
+        TestSignals {
+            name: "body".to_owned(),
+            count: 7,
+        }
+    );
 }
