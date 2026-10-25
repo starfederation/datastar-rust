@@ -61,7 +61,7 @@ tracing = { version = "0.1", default-features = false, optional = true, features
 warp = { version = "0.4", default-features = false, optional = true }
 
 [dev-dependencies]
-actix-web = { version = "4", features = ["macros"] }
+actix-web = { version = "4", default-features = false, features = ["macros"] }
 asynk-strim = { version = "0.1" }
 axum = { version = "0.8.9", default-features = false, features = [
     "http1",
