@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add an Actix Web integration behind the `actix` feature: a streaming `Sse`
+  responder with owned and borrowed conversions from every event type, a
+  `ReadSignals` extractor (GET/DELETE query parameter, JSON body otherwise,
+  including QUERY), and Datastar header constants.
+- Add Actix Web hello, activity-feed, live-reload, and test-suite examples, and
+  run the official SDK suite against Actix Web in CI.
+
 ## 0.4.1 - 2026-09-29
 
 - Sync examples with Datastar 1.0.4 and verify QUERY body signal extraction
