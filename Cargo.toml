@@ -21,12 +21,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-actix-web = [
-    "dep:actix-sse",
-    "dep:actix-web",
-    "dep:serde",
-    "dep:serde_json",
-]
+actix-web = ["dep:actix-sse", "dep:actix-web", "dep:serde", "dep:serde_json"]
 axum = ["dep:axum", "dep:serde", "dep:serde_json"]
 rocket = ["dep:rocket", "rocket/json"]
 tracing = ["dep:tracing"]

@@ -9,7 +9,7 @@ use {
 };
 
 impl PatchElements {
-    /// Write this [`PatchElements`] into a Actix Web SSE [`Event`].
+    /// Write this [`PatchElements`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
         self.as_datastar_event().write_as_actix_web_sse_event()
     }
@@ -28,7 +28,7 @@ impl From<&PatchElements> for Event {
 }
 
 impl PatchSignals {
-    /// Write this [`PatchSignals`] into a Actix Web SSE [`Event`].
+    /// Write this [`PatchSignals`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
         self.as_datastar_event().write_as_actix_web_sse_event()
     }
@@ -47,7 +47,7 @@ impl From<&PatchSignals> for Event {
 }
 
 impl ExecuteScript {
-    /// Write this [`ExecuteScript`] into a Actix SSE [`Event`].
+    /// Write this [`ExecuteScript`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
         self.as_datastar_event().write_as_actix_web_sse_event()
     }
