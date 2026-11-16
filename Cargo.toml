@@ -87,7 +87,6 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
     "env-filter",
     "fmt",
 ] }
-urlencoding = "2"
 warp = { version = "0.4", default-features = false, features = ["test"] }
 
 [lints.rust]
