@@ -1,8 +1,8 @@
+use actix_sse::{Event, Sse};
 use actix_web::{
     App, HttpServer, Responder,
     web::{self, Html, Path},
 };
-use actix_web_lab::sse::{Event, Sse};
 use asynk_strim::{Yielder, stream_fn};
 use datastar::{
     actix_web::ReadSignals,

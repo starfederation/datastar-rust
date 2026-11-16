@@ -35,30 +35,22 @@ Framework integrations are opt-in:
 ### Actix Web
 
 Enable the `actix-web` feature to use the Actix Web signal extractor and
-conversions into Actix Web's native SSE events:
+conversions into `actix_sse` events:
 
 ```toml
 [dependencies]
+actix-sse = "0.2"
 actix-web = "4"
-actix-web-lab = {
-    git = "https://github.com/crustyrustacean/actix-web-lab.git",
-    rev = "3a9ffda1de641fe40560fbdd231dca4544f4945c",
-    default-features = false,
-}
-datastar = {
-    git = "https://github.com/crustyrustacean/datastar-rust.git",
-    branch = "feat/actix-adapter",
-    features = ["actix-web"],
-}
+datastar = { version = "0.4", features = ["actix-web"] }
 tokio-stream = "0.1"
 ```
 
 The adapter exposes `datastar::actix_web::ReadSignals` and converts
 `PatchElements`, `PatchSignals`, `ExecuteScript`, and `DatastarEvent` into
-`actix_web_lab::sse::Event` values:
+`actix_sse::Event` values:
 
 ```rust
-use actix_web_lab::sse::Sse;
+use actix_sse::Sse;
 use datastar::prelude::PatchElements;
 
 async fn handler() -> impl actix_web::Responder {
@@ -68,13 +60,6 @@ async fn handler() -> impl actix_web::Responder {
     Sse::from_infallible_stream(tokio_stream::iter([event]))
 }
 ```
-
-The `actix-web-lab` Git dependency is temporary. This fork pins the revision
-above because it contains the per-message SSE `retry` support required by the
-adapter, which is not yet available in the published lab release. Once that
-SSE work is promoted and released, replace the Git dependency with the
-released version. Applications that use `actix-web-lab` types directly should
-pin the same revision until then.
 
 ## QUERY requests
 

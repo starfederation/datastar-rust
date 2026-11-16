@@ -2,10 +2,11 @@
 
 ## Unreleased
 
-- Add an Actix Web integration behind the `actix` feature: a streaming `Sse`
-  responder with owned and borrowed conversions from every event type, a
-  `ReadSignals` extractor (GET/DELETE query parameter, JSON body otherwise,
-  including QUERY), and Datastar header constants.
+- Add an Actix Web integration behind the `actix-web` feature
+  (`datastar::actix_web`): `write_as_actix_web_sse_event` methods and owned and
+  borrowed `From` conversions from every Datastar event type into
+  `actix_sse::Event`, a `ReadSignals` extractor (GET/DELETE query parameter,
+  JSON body otherwise, including QUERY), and Datastar header constants.
 - Add Actix Web hello, activity-feed, live-reload, and test-suite examples, and
   run the official SDK suite against Actix Web in CI.
 

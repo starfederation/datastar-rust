@@ -1,8 +1,8 @@
 mod sdk_test;
 
 use {
+    actix_sse::{Event, Sse},
     actix_web::{App, HttpResponse, HttpServer, Responder, http::Method, web},
-    actix_web_lab::sse::{Event, Sse},
     asynk_strim::{Yielder, stream_fn},
     core::error::Error,
     datastar::actix_web::ReadSignals,

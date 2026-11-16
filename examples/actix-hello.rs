@@ -1,8 +1,8 @@
+use actix_sse::{Event, Sse};
 use actix_web::{
     App, HttpServer, Responder,
     web::{self, Html},
 };
-use actix_web_lab::sse::{Event, Sse};
 use asynk_strim::{Yielder, stream_fn};
 use datastar::{actix_web::ReadSignals, prelude::PatchElements};
 use serde::Deserialize;

@@ -2,8 +2,8 @@
 
 use {
     crate::prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
+    actix_sse::{Data, Event},
     actix_web::{FromRequest, HttpRequest, dev::Payload, error, http::Method, web},
-    actix_web_lab::sse::{Data, Event},
     serde::{Deserialize, de::DeserializeOwned},
     std::{fmt::Write, future::Future, pin::Pin},
 };
@@ -240,6 +240,7 @@ mod tests {
     use {
         super::*,
         crate::consts::{DATASTAR_REQ_HEADER_STR, ElementPatchMode, Namespace},
+        actix_sse::Sse,
         actix_web::{
             FromRequest, Responder,
             body::to_bytes,
@@ -247,7 +248,6 @@ mod tests {
             test::TestRequest,
             web::Bytes,
         },
-        actix_web_lab::sse::Sse,
         core::time::Duration,
         tokio_stream::iter,
     };
