@@ -1,9 +1,10 @@
+use actix_sse::{Event, Sse};
 use actix_web::{
     App, HttpServer, Responder,
     web::{self, Html},
 };
 use asynk_strim::{Yielder, stream_fn};
-use datastar::{DatastarEvent, actix::ReadSignals, actix::Sse, prelude::PatchElements};
+use datastar::{actix_web::ReadSignals, prelude::PatchElements};
 use serde::Deserialize;
 use std::time::Duration;
 use {
@@ -31,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
         app
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", 3000))?
     .run()
     .await?;
 
@@ -52,7 +53,7 @@ async fn index() -> Html {
             r##"<!-- hot reload -->"##,
             r##"
     <div id="hotreload" data-on-load="@get('/hotreload', {retryMaxCount: 1000,retryInterval:20, retryMaxWaitMs:200})" class="text-yellow-500">
-        <p>a minimal implementation of dev-only live reload added into axum hello example</p>
+        <p>a minimal implementation of dev-only live reload added into Actix Web hello example</p>
     </div>"##
         )).leak()
     });
@@ -74,16 +75,14 @@ async fn hotreload() -> impl Responder {
     use datastar::prelude::ExecuteScript;
     static ONCE: atomic::AtomicBool = atomic::AtomicBool::new(false);
 
-    Sse::new(stream_fn(
-        |mut yielder: Yielder<DatastarEvent>| async move {
-            if !ONCE.swap(true, atomic::Ordering::SeqCst) {
-                let script = ExecuteScript::new("window.location.reload()");
-                let event = script.into_datastar_event();
-                yielder.yield_item(event).await;
-            }
-            std::future::pending().await
-        },
-    ))
+    Sse::from_infallible_stream(stream_fn(|mut yielder: Yielder<Event>| async move {
+        if !ONCE.swap(true, atomic::Ordering::SeqCst) {
+            let script = ExecuteScript::new("window.location.reload()");
+            let event = script.into();
+            yielder.yield_item(event).await;
+        }
+        std::future::pending().await
+    }))
 }
 
 const MESSAGE: &str = "Hello, world!";
@@ -94,16 +93,14 @@ pub struct Signals {
 }
 
 async fn hello_world(ReadSignals(signals): ReadSignals<Signals>) -> impl Responder {
-    Sse::new(stream_fn(
-        move |mut yielder: Yielder<DatastarEvent>| async move {
-            for i in 0..MESSAGE.len() {
-                let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
-                let event = PatchElements::new(elements).into_datastar_event();
+    Sse::from_infallible_stream(stream_fn(move |mut yielder: Yielder<Event>| async move {
+        for i in 0..MESSAGE.len() {
+            let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
+            let event = PatchElements::new(elements).into();
 
-                yielder.yield_item(event).await;
+            yielder.yield_item(event).await;
 
-                tokio::time::sleep(Duration::from_millis(signals.delay)).await;
-            }
-        },
-    ))
+            tokio::time::sleep(Duration::from_millis(signals.delay)).await;
+        }
+    }))
 }

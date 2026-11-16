@@ -1,13 +1,11 @@
 mod sdk_test;
 
 use {
+    actix_sse::{Event, Sse},
     actix_web::{App, HttpResponse, HttpServer, Responder, http::Method, web},
     asynk_strim::{Yielder, stream_fn},
     core::error::Error,
-    datastar::{
-        DatastarEvent,
-        actix::{ReadSignals, Sse},
-    },
+    datastar::actix_web::ReadSignals,
     sdk_test::TestCase,
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
@@ -43,11 +41,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn test(ReadSignals(test_case): ReadSignals<TestCase>) -> impl Responder {
-    Sse::new(stream_fn(
-        |mut yielder: Yielder<DatastarEvent>| async move {
-            for event in test_case.events {
-                yielder.yield_item(event.into_datastar_event()).await;
-            }
-        },
-    ))
+    Sse::from_infallible_stream(stream_fn(|mut yielder: Yielder<Event>| async move {
+        for event in test_case.events {
+            let sse_event = event.into_datastar_event().write_as_actix_web_sse_event();
+
+            yielder.yield_item(sse_event).await;
+        }
+    }))
 }

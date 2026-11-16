@@ -1,9 +1,10 @@
+use actix_sse::{Event, Sse};
 use actix_web::{
     App, HttpServer, Responder,
     web::{self, Html},
 };
 use asynk_strim::{Yielder, stream_fn};
-use datastar::{DatastarEvent, actix::ReadSignals, actix::Sse, prelude::PatchElements};
+use datastar::{actix_web::ReadSignals, prelude::PatchElements};
 use serde::Deserialize;
 use std::time::Duration;
 use {
@@ -26,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .route("/", web::get().to(index))
             .route("/hello-world", web::get().to(hello_world))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", 3000))?
     .run()
     .await?;
 
@@ -45,16 +46,14 @@ pub struct Signals {
 }
 
 async fn hello_world(ReadSignals(signals): ReadSignals<Signals>) -> impl Responder {
-    Sse::new(stream_fn(
-        move |mut yielder: Yielder<DatastarEvent>| async move {
-            for i in 0..MESSAGE.len() {
-                let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
-                let event = PatchElements::new(elements).into_datastar_event();
+    Sse::from_infallible_stream(stream_fn(move |mut yielder: Yielder<Event>| async move {
+        for i in 0..MESSAGE.len() {
+            let elements = format!("<div id='message'>{}</div>", &MESSAGE[0..i + 1]);
+            let event = PatchElements::new(elements).into();
 
-                yielder.yield_item(event).await;
+            yielder.yield_item(event).await;
 
-                tokio::time::sleep(Duration::from_millis(signals.delay)).await;
-            }
-        },
-    ))
+            tokio::time::sleep(Duration::from_millis(signals.delay)).await;
+        }
+    }))
 }

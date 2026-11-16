@@ -23,8 +23,8 @@
 #![forbid(missing_docs)]
 #![forbid(missing_debug_implementations)]
 
-#[cfg(feature = "actix")]
-pub mod actix;
+#[cfg(feature = "actix-web")]
+pub mod actix_web;
 #[cfg(feature = "axum")]
 pub mod axum;
 #[cfg(feature = "rocket")]

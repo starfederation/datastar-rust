@@ -94,16 +94,16 @@ test-suite-axum:
 	cargo run --example axum-test-suite --features axum,tracing
 
 hello-actix:
-	cargo run --example actix-hello --features actix,tracing
+	cargo run --example actix-hello --features actix-web,tracing
 
 live-reload-actix:
-	cargo run --example actix-live-reload --features actix,tracing
+	cargo run --example actix-live-reload --features actix-web,tracing
 
 activity-feed-actix:
-	cargo run --example actix-activity-feed --features actix,tracing
+	cargo run --example actix-activity-feed --features actix-web,tracing
 
 test-suite-actix:
-	cargo run --example actix-test-suite --features actix,tracing
+	cargo run --example actix-test-suite --features actix-web,tracing
 
 hello-warp:
 	cargo run --example warp-hello --features warp,tracing

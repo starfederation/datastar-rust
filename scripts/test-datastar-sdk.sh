@@ -149,7 +149,7 @@ run_framework() {
     case "$framework" in
         actix)
             example=actix-test-suite
-            features=actix,tracing
+            features=actix-web,tracing
             ;;
         axum)
             example=axum-test-suite

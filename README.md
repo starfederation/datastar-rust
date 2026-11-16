@@ -23,15 +23,53 @@ intentionally returns framework-native events instead of providing a
 Runnable examples for every supported framework can be found in
 [`examples`](./examples).
 
+Framework integrations are opt-in:
+
+| Feature | Module |
+| --- | --- |
+| `actix-web` | `datastar::actix_web` |
+| `axum` | `datastar::axum` |
+| `rocket` | `datastar::rocket` |
+| `warp` | `datastar::warp` |
+
+### Actix Web
+
+Enable the `actix-web` feature to use the Actix Web signal extractor and
+conversions into `actix_sse` events:
+
+```toml
+[dependencies]
+actix-sse = "0.2"
+actix-web = "4"
+datastar = { version = "0.4", features = ["actix-web"] }
+tokio-stream = "0.1"
+```
+
+The adapter exposes `datastar::actix_web::ReadSignals` and converts
+`PatchElements`, `PatchSignals`, `ExecuteScript`, and `DatastarEvent` into
+`actix_sse::Event` values:
+
+```rust
+use actix_sse::Sse;
+use datastar::prelude::PatchElements;
+
+async fn handler() -> impl actix_web::Responder {
+    let event = PatchElements::new("<div id=\"message\">Hello</div>")
+        .write_as_actix_web_sse_event();
+
+    Sse::from_infallible_stream(tokio_stream::iter([event]))
+}
+```
+
 ## QUERY requests
 
 Datastar 1.0.4 adds `@query('/endpoint')`, which sends a `QUERY` request with
 signals in the JSON body. GET and DELETE continue to send signals in the
 `datastar` URL query parameter.
 
-- **Actix Web:** `ReadSignals<T>` reads QUERY bodies. Route the method with
-  `web::method(Method::from_bytes(b"QUERY")?)`; the built-in method guards do
-  not cover custom methods. See
+- **Actix Web:** `datastar::actix_web::ReadSignals<T>` reads QUERY bodies.
+  Route the method with `web::method(Method::from_bytes(b"QUERY")?)`; the
+  built-in method guards do not cover custom methods. See
   [`actix-test-suite`](./examples/actix-test-suite.rs).
 - **Axum:** `ReadSignals<T>` reads QUERY bodies. Route the method using
   `axum::routing::any` or a method-router fallback; `MethodFilter` does not
