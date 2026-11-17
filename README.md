@@ -39,7 +39,7 @@ conversions into `actix_sse` events:
 
 ```toml
 [dependencies]
-actix-sse = "0.2"
+actix-sse = "0.3"
 actix-web = "4"
 datastar = { version = "0.4", features = ["actix-web"] }
 tokio-stream = "0.1"

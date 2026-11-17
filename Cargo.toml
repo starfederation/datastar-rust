@@ -34,7 +34,7 @@ warp = [
 ]
 
 [dependencies]
-actix-sse = { version = "0.2.0", default-features = false, optional = true }
+actix-sse = { version = "0.3.0", default-features = false, optional = true }
 actix-web = { version = "4", default-features = false, optional = true }
 axum = { version = "0.8.9", default-features = false, optional = true, features = [
     "query",
