@@ -12,7 +12,7 @@ use {
     tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt},
 };
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::registry()
         .with(

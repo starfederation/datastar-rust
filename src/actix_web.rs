@@ -1,17 +1,70 @@
 //! Actix-Web integration for Datastar
 
 use {
-    crate::prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
+    crate::{
+        DatalineWriter,
+        consts::{self, DEFAULT_SSE_RETRY_DURATION},
+        prelude::{DatastarEvent, ExecuteScript, PatchElements, PatchSignals},
+    },
     actix_sse::{Data, Event},
     actix_web::{FromRequest, HttpRequest, dev::Payload, error, http::Method, web},
+    core::time::Duration,
     serde::{Deserialize, de::DeserializeOwned},
-    std::{fmt::Write, future::Future, pin::Pin},
+    std::{
+        fmt::{self, Write},
+        future::Future,
+        pin::Pin,
+    },
 };
+
+#[derive(Default)]
+struct ActixDatalineWriter {
+    data: String,
+    wrote_dataline: bool,
+}
+
+impl DatalineWriter for ActixDatalineWriter {
+    fn write_dataline(&mut self, args: fmt::Arguments<'_>) -> fmt::Result {
+        if std::mem::replace(&mut self.wrote_dataline, true) {
+            self.data.push('\n');
+        }
+        self.data.write_fmt(args)
+    }
+}
+
+fn write_actix_web_event(
+    event_type: consts::EventType,
+    id: Option<&str>,
+    retry: Duration,
+    write_datalines: impl FnOnce(&mut ActixDatalineWriter) -> fmt::Result,
+) -> Event {
+    let mut writer = ActixDatalineWriter::default();
+    write_datalines(&mut writer).expect("writing datalines to a String cannot fail");
+
+    // actix-sse splits the data on newlines into one `data:` line each.
+    let data = Data::new(writer.data).event(event_type.as_str());
+    let data = match id {
+        Some(id) => data.id(id),
+        None => data,
+    };
+    let data = if retry.as_millis() != DEFAULT_SSE_RETRY_DURATION as u128 {
+        data.retry(retry)
+    } else {
+        data
+    };
+
+    Event::Data(data)
+}
 
 impl PatchElements {
     /// Write this [`PatchElements`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
-        self.as_datastar_event().write_as_actix_web_sse_event()
+        write_actix_web_event(
+            consts::EventType::PatchElements,
+            self.id.as_deref(),
+            self.retry,
+            |writer| self.write_datalines(writer),
+        )
     }
 }
 
@@ -30,7 +83,12 @@ impl From<&PatchElements> for Event {
 impl PatchSignals {
     /// Write this [`PatchSignals`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
-        self.as_datastar_event().write_as_actix_web_sse_event()
+        write_actix_web_event(
+            consts::EventType::PatchSignals,
+            self.id.as_deref(),
+            self.retry,
+            |writer| self.write_datalines(writer),
+        )
     }
 }
 
@@ -49,7 +107,12 @@ impl From<&PatchSignals> for Event {
 impl ExecuteScript {
     /// Write this [`ExecuteScript`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
-        self.as_datastar_event().write_as_actix_web_sse_event()
+        write_actix_web_event(
+            consts::EventType::PatchElements,
+            self.id.as_deref(),
+            self.retry,
+            |writer| self.write_datalines(writer),
+        )
     }
 }
 
@@ -68,31 +131,12 @@ impl From<&ExecuteScript> for Event {
 impl DatastarEvent {
     /// Turn this [`DatastarEvent`] into an Actix Web SSE [`Event`].
     pub fn write_as_actix_web_sse_event(&self) -> Event {
-        let mut data = String::with_capacity(
-            (self.data.iter().map(|s| s.len()).sum::<usize>() + self.data.len()).saturating_sub(1),
-        );
-
-        let mut sep = "";
-        for line in self.data.iter() {
-            // Assumption: std::fmt::write does not fail ever for [`String`].
-            let _ = write!(&mut data, "{sep}{line}");
-            sep = "\n";
-        }
-
-        let data = Data::new(data).event(self.event.as_str());
-
-        let data = match self.id.as_deref() {
-            Some(id) => data.id(id),
-            None => data,
-        };
-
-        let data = if self.retry.as_millis() != crate::consts::DEFAULT_SSE_RETRY_DURATION as u128 {
-            data.retry(self.retry)
-        } else {
-            data
-        };
-
-        Event::Data(data)
+        write_actix_web_event(self.event, self.id.as_deref(), self.retry, |writer| {
+            for line in &self.data {
+                writer.write_dataline(format_args!("{line}"))?;
+            }
+            Ok(())
+        })
     }
 }
 
@@ -120,7 +164,12 @@ struct DatastarParam {
 /// `ReadSignals<Option<T>>` to produce `None`. Other methods read signals from
 /// the JSON request body, including Datastar 1.0.4's `QUERY` method.
 /// Route `QUERY` requests with `web::method(Method::from_bytes(b"QUERY")?)`
-/// or `web::route()`; Actix-Web's method guards do not include custom methods.
+/// or `web::route()`; Actix Web's method guards do not include custom methods.
+///
+/// Note that Actix Web's blanket `Option<T>` extractor turns *any* extraction
+/// error into `None`, so `Option<ReadSignals<T>>` also hides malformed
+/// signals. Use `ReadSignals<Option<T>>` for optional signals, or
+/// `Result<ReadSignals<T>, actix_web::Error>` to handle errors yourself.
 ///
 /// # Examples
 ///
@@ -148,13 +197,12 @@ impl<T: DeserializeOwned + 'static> FromRequest for ReadSignals<T> {
     type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
 
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let req = req.clone();
         // Datastar sends signals in the `datastar` query parameter for GET and
         // DELETE, and in the JSON body for every other method (including QUERY).
         let is_query = matches!(*req.method(), Method::GET | Method::DELETE);
 
         if is_query {
-            let query_fut = web::Query::<DatastarParam>::from_request(&req, payload);
+            let query_fut = web::Query::<DatastarParam>::from_request(req, payload);
             Box::pin(async move {
                 let query = query_fut.await?;
                 let signals = match query.0.datastar.as_ref() {
@@ -177,7 +225,7 @@ impl<T: DeserializeOwned + 'static> FromRequest for ReadSignals<T> {
                 Ok(ReadSignals(parsed))
             })
         } else {
-            let json_fut = <web::Json<T> as FromRequest>::from_request(&req, payload);
+            let json_fut = <web::Json<T> as FromRequest>::from_request(req, payload);
             Box::pin(async move {
                 let json = json_fut.await.map_err(
                     #[cfg_attr(not(feature = "tracing"), expect(unused_variables))]

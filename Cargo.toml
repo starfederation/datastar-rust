@@ -13,7 +13,7 @@ license = "MIT"
 name = "datastar"
 readme = "README.md"
 repository = "https://github.com/starfederation/datastar-rust"
-version = "0.4.1"
+version = "0.4.2"
 rust-version = "1.89.0"
 
 [package.metadata.docs.rs]
@@ -61,11 +61,11 @@ axum = { version = "0.8.9", default-features = false, features = [
     "http1",
     "tokio",
 ] }
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
 indexmap = { version = "2.14", default-features = false, features = [
     "serde",
     "std",
 ] }
+jiff = { version = "1.0.1", default-features = false, features = ["std"] }
 rocket = { version = "0.5", default-features = false }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["std"] }
@@ -132,20 +132,24 @@ name = "actix-hello"
 required-features = ["actix-web", "tracing"]
 
 [[example]]
-name = "axum-hello"
-required-features = ["axum", "tracing"]
-
-[[example]]
-name = "axum-live-reload"
-required-features = ["axum", "tracing"]
-
-[[example]]
 name = "actix-live-reload"
 required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "actix-activity-feed"
 required-features = ["actix-web", "tracing"]
+
+[[example]]
+name = "actix-test-suite"
+required-features = ["actix-web", "tracing"]
+
+[[example]]
+name = "axum-hello"
+required-features = ["axum", "tracing"]
+
+[[example]]
+name = "axum-live-reload"
+required-features = ["axum", "tracing"]
 
 [[example]]
 name = "axum-activity-feed"
@@ -158,10 +162,6 @@ required-features = ["axum"]
 [[example]]
 name = "axum-test-suite"
 required-features = ["axum", "tracing"]
-
-[[example]]
-name = "actix-test-suite"
-required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "rocket-hello"

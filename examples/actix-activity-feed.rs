@@ -43,7 +43,7 @@ pub enum Status {
     Warn,
 }
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::registry()
         .with(
@@ -136,8 +136,8 @@ async fn event(path: Path<Status>, ReadSignals(signals): ReadSignals<Signals>) -
 
 /// Returns an HTML string for the entry
 fn event_entry(status: &Status, index: u64, source: &str) -> String {
-    let timestamp = chrono::Utc::now()
-        .format("%Y-%m-%d %H:%M:%S%.3f")
+    let timestamp = jiff::Timestamp::now()
+        .strftime("%Y-%m-%d %H:%M:%S%.3f")
         .to_string();
     let (color, indicator) = match status {
         Status::Done => ("green", "✅ Done"),

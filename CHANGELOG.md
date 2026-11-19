@@ -1,14 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 - 2026-11-19
 
-- Add an Actix Web integration behind the `actix-web` feature
-  (`datastar::actix_web`): `write_as_actix_web_sse_event` methods and owned and
-  borrowed `From` conversions from every Datastar event type into
-  `actix_sse::Event`, a `ReadSignals` extractor (GET/DELETE query parameter,
-  JSON body otherwise, including QUERY), and Datastar header constants.
-- Add Actix Web hello, activity-feed, live-reload, and test-suite examples, and
-  run the official SDK suite against Actix Web in CI.
+- Add Actix Web support behind the `actix-web` feature (`datastar::actix_web`),
+  producing `actix_sse` events. See the `actix-*` examples.
+- Run the official SDK suite against Actix Web.
+- Update dependencies.
+
+_Thanks to @crustyrustacean (#17)._
 
 ## 0.4.1 - 2026-09-29
 
