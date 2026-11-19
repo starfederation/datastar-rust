@@ -8,12 +8,12 @@ description = "Datastar SDK for Rust"
 documentation = "https://docs.rs/datastar"
 edition = "2024"
 homepage = "https://data-star.dev"
-keywords = ["datastar", "backend", "axum", "rocket", "warp"]
+keywords = ["datastar", "actix", "axum", "rocket", "warp"]
 license = "MIT"
 name = "datastar"
 readme = "README.md"
 repository = "https://github.com/starfederation/datastar-rust"
-version = "0.4.1"
+version = "0.4.2"
 rust-version = "1.89.0"
 
 [package.metadata.docs.rs]
@@ -21,6 +21,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
+actix-web = ["dep:actix-sse", "dep:actix-web", "dep:serde", "dep:serde_json"]
 axum = ["dep:axum", "dep:serde", "dep:serde_json"]
 rocket = ["dep:rocket", "rocket/json"]
 tracing = ["dep:tracing"]
@@ -33,6 +34,8 @@ warp = [
 ]
 
 [dependencies]
+actix-sse = { version = "0.3.0", default-features = false, optional = true }
+actix-web = { version = "4", default-features = false, optional = true }
 axum = { version = "0.8.9", default-features = false, optional = true, features = [
     "query",
     "json",
@@ -52,16 +55,17 @@ tracing = { version = "0.1", default-features = false, optional = true, features
 warp = { version = "0.4", default-features = false, optional = true }
 
 [dev-dependencies]
+actix-web = { version = "4", default-features = false, features = ["macros"] }
 asynk-strim = { version = "0.1" }
 axum = { version = "0.8.9", default-features = false, features = [
     "http1",
     "tokio",
 ] }
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
 indexmap = { version = "2.14", default-features = false, features = [
     "serde",
     "std",
 ] }
+jiff = { version = "1.0.1", default-features = false, features = ["std"] }
 rocket = { version = "0.5", default-features = false }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["std"] }
@@ -122,6 +126,22 @@ opt-level = 3
 [profile.release]
 codegen-units = 1
 lto = "thin"
+
+[[example]]
+name = "actix-hello"
+required-features = ["actix-web", "tracing"]
+
+[[example]]
+name = "actix-live-reload"
+required-features = ["actix-web", "tracing"]
+
+[[example]]
+name = "actix-activity-feed"
+required-features = ["actix-web", "tracing"]
+
+[[example]]
+name = "actix-test-suite"
+required-features = ["actix-web", "tracing"]
 
 [[example]]
 name = "axum-hello"

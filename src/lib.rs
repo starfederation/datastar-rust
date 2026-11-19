@@ -1,9 +1,10 @@
 //! Rust SDK for building [Datastar](https://data-star.dev) server-sent events.
 //!
 //! Use its event types to patch HTML or signals and execute scripts in the
-//! browser. Enable [Axum], [Rocket], or [Warp] for framework-native events and
-//! signal extraction. Supports Datastar 1.0.4, including QUERY body signals
-//! with Axum and Warp. Rocket 0.5 does not support the QUERY HTTP method.
+//! browser. Enable [Actix Web], [Axum], [Rocket], or [Warp] for
+//! framework-native events and signal extraction. Supports Datastar 1.0.4,
+//! including QUERY body signals with Actix Web, Axum, and Warp. Rocket 0.5
+//! does not support the QUERY HTTP method.
 //!
 //! Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
 //! returns framework-native events instead of providing a
@@ -12,6 +13,7 @@
 //! [Rama], a modular framework for building network clients, servers, and
 //! proxies, provides its own [Datastar SDK module].
 //!
+//! [Actix Web]: https://github.com/actix/actix-web
 //! [Axum]: https://github.com/tokio-rs/axum
 //! [Rocket]: https://github.com/rwf2/rocket
 //! [Warp]: https://github.com/seanmonstar/warp
@@ -21,6 +23,8 @@
 #![forbid(missing_docs)]
 #![forbid(missing_debug_implementations)]
 
+#[cfg(feature = "actix-web")]
+pub mod actix_web;
 #[cfg(feature = "axum")]
 pub mod axum;
 #[cfg(feature = "rocket")]

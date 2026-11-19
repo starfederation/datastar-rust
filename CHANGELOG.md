@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2 - 2026-11-19
+
+- Add Actix Web support behind the `actix-web` feature (`datastar::actix_web`),
+  producing `actix_sse` events. See the `actix-*` examples.
+- Run the official SDK suite against Actix Web.
+- Update dependencies.
+
+_Thanks to @crustyrustacean (#17)._
+
 ## 0.4.1 - 2026-09-29
 
 - Sync examples with Datastar 1.0.4 and verify QUERY body signal extraction

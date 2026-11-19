@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/crates/l/datastar.svg)](./LICENSE.md)
 
 An implementation of the [Datastar] SDK in Rust
-with framework integration for [Axum], [Rocket], and [Warp].
+with framework integration for [Actix Web], [Axum], [Rocket], and [Warp].
 
 Supports Datastar **1.0.4**. Its SSE event format and SDK defaults are unchanged
 from 1.0.3.
@@ -29,6 +29,10 @@ Datastar 1.0.4 adds `@query('/endpoint')`, which sends a `QUERY` request with
 signals in the JSON body. GET and DELETE continue to send signals in the
 `datastar` URL query parameter.
 
+- **Actix Web:** `datastar::actix_web::ReadSignals<T>` reads QUERY bodies.
+  Route the method with `web::method(Method::from_bytes(b"QUERY")?)`; the
+  built-in method guards do not cover custom methods. See
+  [`actix-test-suite`](./examples/actix-test-suite.rs).
 - **Axum:** `ReadSignals<T>` reads QUERY bodies. Route the method using
   `axum::routing::any` or a method-router fallback; `MethodFilter` does not
   support custom methods. See [`axum-test-suite`](./examples/axum-test-suite.rs)
@@ -61,7 +65,8 @@ same basic pattern with Rocket.
 
 ## SDK conformance
 
-Run the official Datastar SDK suite against Axum, Rocket, and Warp with Go:
+Run the official Datastar SDK suite against Actix Web, Axum, Rocket, and Warp
+with Go:
 
 ```sh
 make test-datastar-sdk
@@ -74,10 +79,11 @@ make test-datastar-sdk-docker
 ```
 
 The runner defaults to the suite at Datastar 1.0.4 and also checks QUERY routing
-and responses for Axum and Warp. Set `DATASTAR_SDK_TEST_VERSION=latest` to test
+and responses for Actix Web, Axum, and Warp. Set `DATASTAR_SDK_TEST_VERSION=latest` to test
 against the newest upstream suite.
 
 [Datastar]: https://data-star.dev
+[Actix Web]: https://github.com/actix/actix-web
 [Axum]: https://github.com/tokio-rs/axum
 [Rocket]: https://github.com/rwf2/rocket
 [Warp]: https://github.com/seanmonstar/warp

@@ -12,6 +12,10 @@ all:
 	@echo "test                          - run all unit and doc tests"
 	@echo "qa                            - combine lint+check+clippy+doc+hack+test"
 	@echo "detect-unused-deps            - detect unused deps for removal"
+	@echo "hello-actix                   - run hello-world example using the Actix Web framework"
+	@echo "live-reload-actix             - run live-reload example using the Actix Web framework"
+	@echo "activity-feed-actix           - run activity-feed example using the Actix Web framework"
+	@echo "test-suite-actix              - run test-suite example runner using the Actix Web framework"
 	@echo "hello-axum                    - run hello-world example using the Axum framework"
 	@echo "activity-feed-axum            - run activity-feed example using the Axum framework"
 	@echo "watch-axum                    - run watch channel example using the Axum framework"
@@ -88,6 +92,18 @@ watch-axum:
 
 test-suite-axum:
 	cargo run --example axum-test-suite --features axum,tracing
+
+hello-actix:
+	cargo run --example actix-hello --features actix-web,tracing
+
+live-reload-actix:
+	cargo run --example actix-live-reload --features actix-web,tracing
+
+activity-feed-actix:
+	cargo run --example actix-activity-feed --features actix-web,tracing
+
+test-suite-actix:
+	cargo run --example actix-test-suite --features actix-web,tracing
 
 hello-warp:
 	cargo run --example warp-hello --features warp,tracing
