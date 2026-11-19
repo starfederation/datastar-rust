@@ -16,7 +16,11 @@ Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
 intentionally returns framework-native events instead of providing a
 `ServerSentEventGenerator`.
 
-[Rama](https://github.com/plabayo/rama) has its own SDK implementation defined as a [Rama module for Datastar](https://ramaproxy.org/docs/rama/http/sse/datastar/index.html) as can be seen in action in [this example](https://github.com/plabayo/rama/blob/main/examples/http_sse_datastar_hello.rs).
+> [!TIP]
+> Using [Rama](https://github.com/plabayo/rama)? It ships its own Datastar
+> support in the [`rama::http::sse::datastar`](https://ramaproxy.org/docs/rama/http/sse/datastar/index.html)
+> module, shown in action in the [`http_sse_datastar_hello`](https://github.com/plabayo/rama/blob/main/examples/src/http_sse_datastar_hello.rs)
+> example.
 
 # Usage
 
