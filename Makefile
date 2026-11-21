@@ -40,7 +40,7 @@ sort:
 	cargo sort --grouped
 
 sort-check:
-	cargo sort --workspace --grouped --check
+	cargo sort --grouped --check
 
 lint: fmt sort
 
