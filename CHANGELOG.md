@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.2 - 2026-11-20
+## 0.4.2 - 2026-11-21
 
 - Add Actix Web support behind the `actix-web` feature (`datastar::actix_web`),
   producing `actix_sse` events. See the `actix-*` examples.
