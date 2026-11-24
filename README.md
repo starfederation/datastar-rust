@@ -9,7 +9,7 @@
 An implementation of the [Datastar] SDK in Rust
 with framework integration for [Actix Web], [Axum], [Rocket], and [Warp].
 
-Supports Datastar **1.0.4**. Its SSE event format and SDK defaults are unchanged
+Supports Datastar **1.0.5**. Its SSE event format and SDK defaults are unchanged
 from 1.0.3.
 
 Rust web frameworks own SSE stream lifecycle and backpressure, so this SDK
@@ -50,7 +50,8 @@ The new free Datastar Rocket browser bundle is unrelated to Rust's Rocket
 framework. It uses the same SDK events. The other
 [1.0.4 release changes](https://github.com/starfederation/datastar/releases/tag/v1.0.4),
 including CSP nonce aliases, request cancellation, and signal reactivity fixes,
-are handled by the browser bundle.
+are handled by the browser bundle. The same holds for the
+[1.0.5 fixes](https://github.com/starfederation/datastar/releases/tag/v1.0.5).
 
 ## Long-lived streams
 
@@ -81,7 +82,7 @@ Or run the official test runner in Docker:
 make test-datastar-sdk-docker
 ```
 
-The runner defaults to the suite at Datastar 1.0.4 and also checks QUERY routing
+The runner defaults to the suite at Datastar 1.0.5 and also checks QUERY routing
 and responses for Actix Web, Axum, and Warp. Set `DATASTAR_SDK_TEST_VERSION=latest` to test
 against the newest upstream suite.
 

@@ -2,7 +2,7 @@
 //!
 //! Use its event types to patch HTML or signals and execute scripts in the
 //! browser. Enable [Actix Web], [Axum], [Rocket], or [Warp] for
-//! framework-native events and signal extraction. Supports Datastar 1.0.4,
+//! framework-native events and signal extraction. Supports Datastar 1.0.5,
 //! including QUERY body signals with Actix Web, Axum, and Warp. Rocket 0.5
 //! does not support the QUERY HTTP method.
 //!

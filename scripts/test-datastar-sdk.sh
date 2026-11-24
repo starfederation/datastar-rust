@@ -13,7 +13,7 @@ usage() {
     echo "  --docker  run the official suite with the Go Docker image"
     echo
     echo "environment:"
-    echo "  DATASTAR_SDK_TEST_VERSION  Go module version or revision (default: Datastar 1.0.4)"
+    echo "  DATASTAR_SDK_TEST_VERSION  Go module version or revision (default: Datastar 1.0.5)"
     echo "  DATASTAR_GO_IMAGE          Docker image (default: golang:1.25)"
 }
 
@@ -93,8 +93,8 @@ trap cleanup EXIT
 
 run_official_suite() {
     local test_package=github.com/starfederation/datastar/sdk/tests/cmd/datastar-sdk-tests
-    # The tests are a nested Go module, so use the v1.0.4 commit, not its root tag.
-    local test_version="${DATASTAR_SDK_TEST_VERSION:-1efcdc3cb336ec3e9139491604e770e0329657bc}"
+    # The tests are a nested Go module, so use the v1.0.5 commit, not its root tag.
+    local test_version="${DATASTAR_SDK_TEST_VERSION:-fb03989a5fbb5584d15198e1a4bac151a848ef08}"
 
     if [ "$RUNNER" = native ]; then
         go run "$test_package@$test_version" \

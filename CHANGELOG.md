@@ -4,6 +4,8 @@
 
 - Clarify `Query` support in Actix Web in examples and docs.
   (_Thanks to @robjtede (#18)._)
+- Sync examples and the default SDK suite pin with Datastar 1.0.5. Its SSE
+  format and SDK defaults are unchanged; the fixes are in the browser bundle.
 - Update dependencies.
 
 ## 0.4.2 - 2026-11-21
