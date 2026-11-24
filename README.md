@@ -34,8 +34,7 @@ signals in the JSON body. GET and DELETE continue to send signals in the
 `datastar` URL query parameter.
 
 - **Actix Web:** `datastar::actix_web::ReadSignals<T>` reads QUERY bodies.
-  Route the method with `web::method(Method::from_bytes(b"QUERY")?)`; the
-  built-in method guards do not cover custom methods. See
+  Route the method with `web::query()`. See
   [`actix-test-suite`](./examples/actix-test-suite.rs).
 - **Axum:** `ReadSignals<T>` reads QUERY bodies. Route the method using
   `axum::routing::any` or a method-router fallback; `MethodFilter` does not
