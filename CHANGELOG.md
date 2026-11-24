@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3 - 2026-11-25
+
+- Clarify `Query` support in Actix Web in examples and docs.
+  (_Thanks to @robjtede (#18)._)
+- Update dependencies.
+
 ## 0.4.2 - 2026-11-21
 
 - Add Actix Web support behind the `actix-web` feature (`datastar::actix_web`),
