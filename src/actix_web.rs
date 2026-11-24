@@ -163,8 +163,7 @@ struct DatastarParam {
 /// A missing parameter is treated as JSON `null`, allowing
 /// `ReadSignals<Option<T>>` to produce `None`. Other methods read signals from
 /// the JSON request body, including Datastar 1.0.4's `QUERY` method.
-/// Route `QUERY` requests with `web::method(Method::from_bytes(b"QUERY")?)`
-/// or `web::route()`; Actix Web's method guards do not include custom methods.
+/// Route `QUERY` requests with [`web::query()`].
 ///
 /// Note that Actix Web's blanket `Option<T>` extractor turns *any* extraction
 /// error into `None`, so `Option<ReadSignals<T>>` also hides malformed
@@ -499,8 +498,7 @@ mod tests {
 
     #[actix_web::test]
     async fn extracts_query_method_signals_from_body() {
-        let (req, mut payload) = TestRequest::default()
-            .method(Method::from_bytes(b"QUERY").unwrap())
+        let (req, mut payload) = TestRequest::query()
             .uri("/?datastar=%7B%22count%22%3A1%7D")
             .insert_header((header::CONTENT_TYPE, "application/json"))
             .insert_header((DATASTAR_REQ_HEADER_STR, "true"))
@@ -517,8 +515,7 @@ mod tests {
     #[actix_web::test]
     async fn rejects_invalid_query_method_bodies() {
         for body in ["", "not-json", r#"{"count":"invalid"}"#] {
-            let (req, mut payload) = TestRequest::default()
-                .method(Method::from_bytes(b"QUERY").unwrap())
+            let (req, mut payload) = TestRequest::query()
                 .uri("/?datastar=%7B%22count%22%3A1%7D")
                 .insert_header((header::CONTENT_TYPE, "application/json"))
                 .set_payload(Bytes::copy_from_slice(body.as_bytes()))
