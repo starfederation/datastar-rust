@@ -24,7 +24,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         // The conformance runner uses GET, POST, and QUERY.
         // `ReadSignals` reads the `datastar` query parameter for GET/DELETE and
         // the JSON body otherwise. Any other method is rejected with 405.
-        let query = Method::from_bytes(b"QUERY").expect("QUERY is a valid method token");
         App::new().service(
             web::resource("/test")
                 .route(web::get().to(test))
