@@ -59,6 +59,9 @@ hack:
 test:
 	cargo test --all-features
 
+deny-deps:
+	cargo deny check
+
 test-datastar-sdk:
 	./scripts/test-datastar-sdk.sh
 
@@ -72,8 +75,9 @@ detect-unused-deps:
 	cargo machete --skip-target-dir
 
 update-deps:
-	cargo upgrades
+	cargo upgrade --incompatible
 	cargo update
+	cargo generate-lockfile
 
 hello-axum:
 	cargo run --example axum-hello --features axum,tracing
