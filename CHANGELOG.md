@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.3 - 2026-11-25
+## 0.4.3 - 2026-11-27
 
 - Clarify `Query` support in Actix Web in examples and docs.
   (_Thanks to @robjtede (#18)._)
